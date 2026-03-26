@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "LaserTagSymbols")(type "KiCad")(uri "${KIPRJMOD}/LaserTagSymbols.kicad_sym")(options "")(descr ""))
+)
