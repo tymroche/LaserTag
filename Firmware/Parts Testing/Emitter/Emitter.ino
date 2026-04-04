@@ -1,9 +1,19 @@
-void setup() {
-  // put your setup code here, to run once:
+#define LED 21
+#define EMITTER_TX 1
 
+#define ON 1
+#define OFF 0
+bool status;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LED, OUTPUT);
+  pinMode(EMITTER_TX, OUTPUT);
+  status = OFF;
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  delay(2000);
+  if (status) { digitalWrite(LED, HIGH); digitalWrite(EMITTER_TX, HIGH); status = OFF; 
+  } else { digitalWrite(LED, LOW); digitalWrite(EMITTER_TX, LOW); status = ON; }
+  delay(100);
 }
