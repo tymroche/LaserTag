@@ -132,6 +132,278 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "LaserTagSymbols:LaserTag_Receiver"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "RX"
+				(at -2.54 9.398 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "LaserTag_Receiver_0_1"
+				(rectangle
+					(start 0 7.62)
+					(end -5.08 -5.08)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "LaserTag_Receiver_1_1"
+				(pin output line
+					(at 2.54 6.35 180)
+					(length 2.54)
+					(name "IRH"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at 2.54 3.81 180)
+					(length 2.54)
+					(name "IRV"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at 2.54 1.27 180)
+					(length 2.54)
+					(name "Sig"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 2.54 -1.27 180)
+					(length 2.54)
+					(name "V+"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 2.54 -3.81 180)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "LaserTag_Emitter_1"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "TX"
+				(at -2.54 6.604 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "LaserTag_Emitter_1_0_1"
+				(rectangle
+					(start -5.08 5.08)
+					(end 0 -5.08)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "LaserTag_Emitter_1_1_1"
+				(pin power_in line
+					(at 2.54 2.54 180)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 2.54 0 180)
+					(length 2.54)
+					(name "V+"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at 2.54 -2.54 180)
+					(length 2.54)
+					(name "In"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Switch:SW_SPST"
 			(pin_names
 				(offset 0)
@@ -746,7 +1018,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "power:GNDREF"
+		(symbol "power:PWR_FLAG"
 			(power)
 			(pin_numbers
 				(hide yes)
@@ -758,8 +1030,8 @@
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
-			(property "Reference" "#PWR"
-				(at 0 -6.35 0)
+			(property "Reference" "#FLG"
+				(at 0 1.905 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -767,8 +1039,8 @@
 					(hide yes)
 				)
 			)
-			(property "Value" "GNDREF"
-				(at 0 -3.81 0)
+			(property "Value" "PWR_FLAG"
+				(at 0 3.81 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -784,7 +1056,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" ""
+			(property "Datasheet" "~"
 				(at 0 0 0)
 				(effects
 					(font
@@ -793,7 +1065,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Power symbol creates a global label with name \"GNDREF\" , reference supply ground"
+			(property "Description" "Special symbol for telling ERC where power comes from"
 				(at 0 0 0)
 				(effects
 					(font
@@ -802,7 +1074,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_keywords" "global power"
+			(property "ki_keywords" "flag power"
 				(at 0 0 0)
 				(effects
 					(font
@@ -811,59 +1083,9 @@
 					(hide yes)
 				)
 			)
-			(symbol "GNDREF_0_1"
-				(polyline
-					(pts
-						(xy -0.635 -1.905) (xy 0.635 -1.905)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -0.127 -2.54) (xy 0.127 -2.54)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 -1.27) (xy 0 0)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.27 -1.27) (xy -1.27 -1.27)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "GNDREF_1_1"
-				(pin power_in line
-					(at 0 0 270)
+			(symbol "PWR_FLAG_0_0"
+				(pin power_out line
+					(at 0 0 90)
 					(length 0)
 					(name "~"
 						(effects
@@ -881,42 +1103,164 @@
 					)
 				)
 			)
+			(symbol "PWR_FLAG_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 1.27) (xy -1.016 1.905) (xy 0 2.54) (xy 1.016 1.905) (xy 0 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
 			(embedded_fonts no)
 		)
 	)
 	(text "Note: Pull-Down GPIO Pin \n(Digital In)"
 		(exclude_from_sim no)
-		(at 121.158 74.93 0)
+		(at 116.586 74.422 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 0.889 0.889)
 			)
 		)
 		(uuid "2a022106-3a7d-4dc0-be80-d54f25ad2c57")
 	)
 	(text "Note: Ensure GPIO Pin is PWM Capable. \nPotentially Use Headphones Instead.\n(Analog Out)\n"
 		(exclude_from_sim no)
-		(at 147.066 93.472 0)
+		(at 129.54 91.694 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 0.889 0.889)
 			)
 		)
 		(uuid "3a816a46-b610-49b7-8bb3-9cbd6a0fd72a")
 	)
+	(text "Note: Use the ADC for \nAnalog Input on GPIO9\n(Analog In)\n"
+		(exclude_from_sim no)
+		(at 46.482 74.676 0)
+		(effects
+			(font
+				(size 0.889 0.889)
+			)
+		)
+		(uuid "fb696815-dbf8-42a9-9a2a-aa1ce34ebfac")
+	)
+	(junction
+		(at 115.57 62.23)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6f60f810-9b20-4b2a-a9ca-80ab20ef07de")
+	)
+	(junction
+		(at 71.12 80.01)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "8a257687-49f7-459f-9703-1cd496029e66")
+	)
+	(no_connect
+		(at 106.68 77.47)
+		(uuid "08b8d994-8904-470b-b753-2722320e8863")
+	)
+	(no_connect
+		(at 81.28 59.69)
+		(uuid "1238d27d-c9e6-401d-96b9-c4706454e5b5")
+	)
+	(no_connect
+		(at 106.68 57.15)
+		(uuid "29dda0f7-c4f8-4ef8-98c3-f01140ac7ab9")
+	)
+	(no_connect
+		(at 81.28 69.85)
+		(uuid "2ef65713-b05a-4f62-b1e7-620c23929fcb")
+	)
+	(no_connect
+		(at 106.68 69.85)
+		(uuid "5412caee-705a-4909-9f8a-1409f5fdfdf1")
+	)
+	(no_connect
+		(at 81.28 72.39)
+		(uuid "5c583f65-97d4-4a5c-8b30-60167e5e9d9e")
+	)
+	(no_connect
+		(at 81.28 82.55)
+		(uuid "614cb296-e97b-4092-9d06-9554223df8e2")
+	)
+	(no_connect
+		(at 81.28 77.47)
+		(uuid "6de0e663-7bc8-41fe-b623-caff7e8ffe3d")
+	)
+	(no_connect
+		(at 106.68 59.69)
+		(uuid "7d41fdc3-f331-4cf5-acaf-17c8438174f8")
+	)
+	(no_connect
+		(at 81.28 85.09)
+		(uuid "81c0b180-c165-4933-bc2c-281c5790817b")
+	)
+	(no_connect
+		(at 81.28 64.77)
+		(uuid "8a0e71d6-12a0-443b-b0ed-23b104304576")
+	)
+	(no_connect
+		(at 63.5 69.85)
+		(uuid "9883da4e-9d56-48d3-804a-c9b4b46961e1")
+	)
+	(no_connect
+		(at 106.68 64.77)
+		(uuid "9d93a9c3-63c1-4598-b8f7-9f4a9f59cb84")
+	)
+	(no_connect
+		(at 106.68 80.01)
+		(uuid "9f2aebf1-14b1-4c7e-9fee-02b74b9c99a5")
+	)
+	(no_connect
+		(at 63.5 72.39)
+		(uuid "a34b11ed-0774-47af-ba82-781ac1f4da84")
+	)
+	(no_connect
+		(at 106.68 67.31)
+		(uuid "cf92b5c7-8b3e-4841-92a5-fe4838cfd606")
+	)
+	(no_connect
+		(at 81.28 74.93)
+		(uuid "d7e9d0ed-aa9d-44c9-800a-64cbdc4f5f85")
+	)
+	(no_connect
+		(at 106.68 74.93)
+		(uuid "f21aca64-2b59-4148-a996-01df22f671c4")
+	)
+	(no_connect
+		(at 81.28 62.23)
+		(uuid "f6e6c8cb-3822-4a85-9891-bb36625dfd15")
+	)
 	(wire
 		(pts
-			(xy 72.39 80.01) (xy 81.28 80.01)
+			(xy 71.12 80.01) (xy 81.28 80.01)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "14d2657e-1505-4932-a2ed-f87e0279d6c1")
+		(uuid "1b89e338-a2b4-4c96-9e40-daa6a4a261d8")
 	)
 	(wire
 		(pts
-			(xy 106.68 82.55) (xy 123.19 82.55)
+			(xy 72.39 67.31) (xy 81.28 67.31)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1dac1a2c-8747-48b9-b520-c3319077e3a9")
+	)
+	(wire
+		(pts
+			(xy 106.68 82.55) (xy 119.38 82.55)
 		)
 		(stroke
 			(width 0)
@@ -926,7 +1270,17 @@
 	)
 	(wire
 		(pts
-			(xy 106.68 62.23) (xy 125.73 62.23)
+			(xy 63.5 57.15) (xy 81.28 57.15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "417a1527-10cf-42d1-898c-972ad028af48")
+	)
+	(wire
+		(pts
+			(xy 106.68 62.23) (xy 115.57 62.23)
 		)
 		(stroke
 			(width 0)
@@ -936,7 +1290,7 @@
 	)
 	(wire
 		(pts
-			(xy 106.68 72.39) (xy 125.73 72.39)
+			(xy 106.68 72.39) (xy 123.19 72.39)
 		)
 		(stroke
 			(width 0)
@@ -946,37 +1300,157 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 82.55) (xy 72.39 80.01)
+			(xy 63.5 77.47) (xy 72.39 77.47)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "bea651e7-7a0b-4580-a204-6d8c5eb3bf88")
+		(uuid "63fc65c6-8dec-424f-ae4d-126a1dc07e7d")
 	)
 	(wire
 		(pts
-			(xy 119.38 90.17) (xy 119.38 85.09)
+			(xy 63.5 54.61) (xy 72.39 54.61)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "c68a099f-a8a7-437c-be0f-96a0302f52e3")
+		(uuid "6bbf54fd-ade4-4bf6-b07f-8b0f13cd51ec")
 	)
 	(wire
 		(pts
-			(xy 119.38 85.09) (xy 123.19 85.09)
+			(xy 63.5 52.07) (xy 72.39 52.07)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "cf2724fb-71f4-496f-95aa-13296bbe4468")
+		(uuid "721783c4-84b5-4511-86ed-c9d91f6eaf5a")
+	)
+	(wire
+		(pts
+			(xy 115.57 62.23) (xy 123.19 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9e352b44-16a0-4e33-8e47-c7433a2606cd")
+	)
+	(wire
+		(pts
+			(xy 71.12 80.01) (xy 71.12 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b6acf99d-0f92-45b7-a5e3-5680e577a872")
+	)
+	(wire
+		(pts
+			(xy 72.39 74.93) (xy 72.39 67.31)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ca879b22-5300-4717-b373-55041ef175ff")
+	)
+	(wire
+		(pts
+			(xy 63.5 74.93) (xy 72.39 74.93)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d1a5aee1-98e5-427d-864f-35f2d7e0531b")
+	)
+	(wire
+		(pts
+			(xy 115.57 54.61) (xy 115.57 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fc9be849-977d-43bf-b2e2-77961cdf7a44")
+	)
+	(wire
+		(pts
+			(xy 63.5 80.01) (xy 71.12 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ffd7d330-0fcb-45d2-89ec-7ace15f04719")
+	)
+	(label "V+"
+		(at 72.39 77.47 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "0fcdd15d-3ef4-4a89-b79c-cea97f7863a9")
+	)
+	(label "GND"
+		(at 119.38 85.09 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "1719cd9b-58e4-47d5-986e-436bf00fced4")
+	)
+	(label "GND"
+		(at 71.12 86.36 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "2fb97ac1-5e8f-47c4-909f-7a65cfec6dd1")
+	)
+	(label "GND"
+		(at 72.39 52.07 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "4e89f22c-47fb-4838-b7ff-c6582baef0cf")
+	)
+	(label "V+"
+		(at 115.57 54.61 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "97a5187b-9613-468a-bc45-90dccd2b0a4e")
+	)
+	(label "V+"
+		(at 72.39 54.61 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "fa260642-833b-403f-b02b-5c0ed6359812")
 	)
 	(symbol
 		(lib_id "Switch:SW_SPST")
-		(at 125.73 67.31 270)
+		(at 123.19 67.31 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -985,7 +1459,7 @@
 		(fields_autoplaced yes)
 		(uuid "14f6707f-ef60-4c42-92a6-170df2fc8d6d")
 		(property "Reference" "SW1"
-			(at 128.27 66.0399 90)
+			(at 125.73 66.0399 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -994,7 +1468,7 @@
 			)
 		)
 		(property "Value" "SW_SPST"
-			(at 128.27 68.5799 90)
+			(at 125.73 68.5799 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1003,7 +1477,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 125.73 67.31 0)
+			(at 123.19 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1012,7 +1486,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 125.73 67.31 0)
+			(at 123.19 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1021,7 +1495,7 @@
 			)
 		)
 		(property "Description" "Single Pole Single Throw (SPST) switch"
-			(at 125.73 67.31 0)
+			(at 123.19 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1045,17 +1519,25 @@
 		)
 	)
 	(symbol
-		(lib_id "power:GNDREF")
-		(at 119.38 90.17 0)
+		(lib_name "LaserTag_Emitter_1")
+		(lib_id "LaserTagSymbols:LaserTag_Emitter")
+		(at 60.96 54.61 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "5305a045-4212-4a7b-b826-2d66ef97dd83")
-		(property "Reference" "#PWR02"
-			(at 119.38 96.52 0)
+		(uuid "2b002930-d7c5-4f3b-8800-87d56378cd0b")
+		(property "Reference" "TX1"
+			(at 58.42 47.498 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "~"
+			(at 58.42 46.99 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1063,16 +1545,8 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "GNDREF"
-			(at 119.38 95.25 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Footprint" ""
-			(at 119.38 90.17 0)
+			(at 60.96 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1081,7 +1555,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 119.38 90.17 0)
+			(at 60.96 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1089,8 +1563,8 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"GNDREF\" , reference supply ground"
-			(at 119.38 90.17 0)
+		(property "Description" ""
+			(at 60.96 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1099,12 +1573,85 @@
 			)
 		)
 		(pin "1"
-			(uuid "110d9d75-9f34-4150-8540-deb4ce2a84bf")
+			(uuid "a62f8a2f-a14c-4a7b-9f9a-cfb1034e8600")
+		)
+		(pin "3"
+			(uuid "08886e3d-30b8-47e4-80f9-13f3148a09bc")
+		)
+		(pin "2"
+			(uuid "e0f01e78-8c61-49c1-9d9a-a0524ea8d15a")
 		)
 		(instances
 			(project "LaserTag"
 				(path "/7f8da6af-4191-4416-950a-8f60c065596d"
-					(reference "#PWR02")
+					(reference "TX1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:PWR_FLAG")
+		(at 115.57 54.61 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "7579028e-f8e9-44ea-9879-b79c73919cad")
+		(property "Reference" "#FLG01"
+			(at 117.475 54.61 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "PWR_FLAG"
+			(at 119.38 54.6099 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 115.57 54.61 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 115.57 54.61 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Special symbol for telling ERC where power comes from"
+			(at 115.57 54.61 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "a5ff72d2-901e-4dff-a6f5-d19fadd006bf")
+		)
+		(instances
+			(project "LaserTag"
+				(path "/7f8da6af-4191-4416-950a-8f60c065596d"
+					(reference "#FLG01")
 					(unit 1)
 				)
 			)
@@ -1243,7 +1790,7 @@
 	)
 	(symbol
 		(lib_id "Device:Speaker")
-		(at 128.27 82.55 0)
+		(at 124.46 82.55 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -1252,7 +1799,7 @@
 		(fields_autoplaced yes)
 		(uuid "b3989ea7-9aaa-4ae6-aef9-73a9e3e1f965")
 		(property "Reference" "LS1"
-			(at 133.35 82.5499 0)
+			(at 129.54 82.5499 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1261,7 +1808,7 @@
 			)
 		)
 		(property "Value" "Speaker"
-			(at 133.35 85.0899 0)
+			(at 129.54 85.0899 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1270,7 +1817,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 128.27 87.63 0)
+			(at 124.46 87.63 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1279,7 +1826,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 128.016 83.82 0)
+			(at 124.206 83.82 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1288,7 +1835,7 @@
 			)
 		)
 		(property "Description" "Speaker"
-			(at 128.27 82.55 0)
+			(at 124.46 82.55 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1312,17 +1859,16 @@
 		)
 	)
 	(symbol
-		(lib_id "power:GNDREF")
-		(at 72.39 82.55 0)
+		(lib_id "power:PWR_FLAG")
+		(at 71.12 86.36 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "e027bdc2-f961-4009-bed6-0d92e6a2e688")
-		(property "Reference" "#PWR01"
-			(at 72.39 88.9 0)
+		(uuid "b8c7ce2a-35ef-4ab1-9529-0c53bd524b13")
+		(property "Reference" "#FLG02"
+			(at 69.215 86.36 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1330,16 +1876,17 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "GNDREF"
-			(at 72.39 87.63 0)
+		(property "Value" "PWR_FLAG"
+			(at 67.31 86.3599 90)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
+				(justify left)
 			)
 		)
 		(property "Footprint" ""
-			(at 72.39 82.55 0)
+			(at 71.12 86.36 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1347,8 +1894,8 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" ""
-			(at 72.39 82.55 0)
+		(property "Datasheet" "~"
+			(at 71.12 86.36 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1356,8 +1903,8 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"GNDREF\" , reference supply ground"
-			(at 72.39 82.55 0)
+		(property "Description" "Special symbol for telling ERC where power comes from"
+			(at 71.12 86.36 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1366,12 +1913,89 @@
 			)
 		)
 		(pin "1"
-			(uuid "e228c227-d550-4d3d-a491-a6fb7e54e91e")
+			(uuid "a28fb8ff-389d-4a68-bde1-7c310e99c9ad")
 		)
 		(instances
 			(project "LaserTag"
 				(path "/7f8da6af-4191-4416-950a-8f60c065596d"
-					(reference "#PWR01")
+					(reference "#FLG02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "LaserTagSymbols:LaserTag_Receiver")
+		(at 60.96 76.2 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "bbe573b6-6e0f-4b89-b73d-fe77bd0c6593")
+		(property "Reference" "RX1"
+			(at 58.42 66.548 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "~"
+			(at 58.42 66.04 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 60.96 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 60.96 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 60.96 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "bab62e09-6841-4657-a18d-d53bce54abf1")
+		)
+		(pin "5"
+			(uuid "352876a3-2ec4-411b-a576-989db125d34f")
+		)
+		(pin "4"
+			(uuid "dbc08ae5-4098-47e4-bbe8-87a17305b1a3")
+		)
+		(pin "2"
+			(uuid "85d97318-a20e-4fbb-8393-237793301ee9")
+		)
+		(pin "3"
+			(uuid "1cdb2e9a-9a0c-4ac4-b3f9-382813b6f694")
+		)
+		(instances
+			(project "LaserTag"
+				(path "/7f8da6af-4191-4416-950a-8f60c065596d"
+					(reference "RX1")
 					(unit 1)
 				)
 			)
