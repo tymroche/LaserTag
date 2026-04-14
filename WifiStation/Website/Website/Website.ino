@@ -94,10 +94,10 @@ String getQueryValue(String req, String key) {
 
 /*
   Convert a player slot number to the assigned IR/player ID.
-  slot 0 -> x01
-  slot 1 -> x02
-  slot 2 -> x03
-  slot 3 -> x04
+  slot 0 x01
+  slot 1 x02
+  slot 2 x03
+  slot 3 x04
 */
 String slotToPlayerId(int slot) {
   if (slot < 0 || slot >= MAX_PLAYERS) return "";
@@ -626,14 +626,18 @@ void handleBrowserAction(String req) {
     removePlayer(getQueryValue(req, "slot").toInt());
   } else if (req.indexOf("GET /clear") >= 0) {
     removeAllPlayers();
-  } else if (req.indexOf("GET /time?seconds=") >= 0) {
-    int secs = getQueryValue(req, "seconds").toInt();
-    if (secs > 0) {
-      ffaDurationSeconds = secs;
-      ffaTimerRunning = false;
-      statusMessage = "Free For All time set to " + formatTime(ffaDurationSeconds) + ".";
-      sendStateToAllPlayers();
-    }
+  } else if (req.indexOf("GET /time/add15") >= 0) {
+  ffaDurationSeconds += 15;
+  statusMessage = "Free For All time set to " + formatTime(ffaDurationSeconds) + ".";
+  sendStateToAllPlayers();
+} else if (req.indexOf("GET /time/sub15") >= 0) {
+  if (ffaDurationSeconds > 15) {
+    ffaDurationSeconds -= 15;
+  } else {
+    ffaDurationSeconds = 15;
+  }
+  statusMessage = "Free For All time set to " + formatTime(ffaDurationSeconds) + ".";
+  sendStateToAllPlayers();
   } else if (req.indexOf("GET /timer/start") >= 0) {
     if (gameMode == "Free For All") startFFATimer();
   } else if (req.indexOf("GET /timer/stop") >= 0) {
@@ -664,7 +668,6 @@ void serveWebPage(WiFiClient& client) {
 
   client.println("<!DOCTYPE html><html>");
   client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-  client.println("<meta http-equiv=\"refresh\" content=\"2\">");
   client.println("<link rel=\"icon\" href=\"data:,\">");
 
   client.println("<style>");
@@ -673,7 +676,6 @@ void serveWebPage(WiFiClient& client) {
   client.println(".card { background: #1e1e1e; border-radius: 14px; padding: 18px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.35); }");
   client.println("h1 { margin: 0; font-size: 2rem; }");
   client.println("h2 { margin-top: 0; margin-bottom: 12px; font-size: 1.3rem; }");
-  client.println(".mode-card { touch-action: pan-y; }");
   client.println(".mode { font-size: 1.5rem; font-weight: bold; margin-bottom: 12px; }");
   client.println(".mode-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }");
   client.println(".mode-btn { display: inline-block; width: 44%; max-width: 160px; padding: 12px; border-radius: 10px; text-decoration: none; color: white; background: #2f80ed; font-size: 1rem; }");
@@ -694,30 +696,11 @@ void serveWebPage(WiFiClient& client) {
   client.println(".rank { opacity: 0.8; margin-right: 6px; }");
   client.println("</style>");
 
-  client.println("<script>");
-  client.println("let touchStartX = 0;");
-  client.println("let touchEndX = 0;");
-  client.println("function handleSwipe() {");
-  client.println("  if (touchEndX < touchStartX - 40 || touchEndX > touchStartX + 40) {");
-  client.println("    const currentMode = '" + gameMode + "';");
-  client.println("    if (currentMode === 'Free For All') window.location.href='/mode/duels';");
-  client.println("    else window.location.href='/mode/ffa';");
-  client.println("  }");
-  client.println("}");
-  client.println("window.addEventListener('load', function() {");
-  client.println("  const modeCard = document.getElementById('modeCard');");
-  client.println("  if (modeCard) {");
-  client.println("    modeCard.addEventListener('touchstart', function(e){ touchStartX = e.changedTouches[0].screenX; }, false);");
-  client.println("    modeCard.addEventListener('touchend', function(e){ touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);");
-  client.println("  }");
-  client.println("});");
-  client.println("</script>");
-
   client.println("</head><body><div class=\"container\">");
 
   client.println("<div class=\"card\"><h1>Laser Tag</h1></div>");
 
-  client.println("<div class=\"card mode-card\" id=\"modeCard\">");
+  client.println("<div class=\"card\">");
   client.println("<h2>Gamemode</h2>");
   client.println("<div class=\"mode\">" + gameMode + "</div>");
   client.println("<div class=\"mode-buttons\">");
@@ -731,31 +714,21 @@ void serveWebPage(WiFiClient& client) {
   }
 
   client.println("</div>");
-  client.println("<div class=\"hint\">Tap a mode button or swipe left/right on this card.</div>");
+  client.println("<div class=\"hint\">Pick a mode.</div>");
   client.println("</div>");
 
   if (gameMode == "Free For All") {
     client.println("<div class=\"card\">");
     client.println("<h2>Free For All Timer</h2>");
-    client.println("<div class=\"timer-value\">" + formatTime(getRemainingFFATime()) + "</div>");
-
-    if (ffaDurationSeconds == 60) client.println("<a class=\"time-btn active\" href=\"/time?seconds=60\">1:00</a>");
-    else client.println("<a class=\"time-btn\" href=\"/time?seconds=60\">1:00</a>");
-
-    if (ffaDurationSeconds == 90) client.println("<a class=\"time-btn active\" href=\"/time?seconds=90\">1:30</a>");
-    else client.println("<a class=\"time-btn\" href=\"/time?seconds=90\">1:30</a>");
-
-    if (ffaDurationSeconds == 120) client.println("<a class=\"time-btn active\" href=\"/time?seconds=120\">2:00</a>");
-    else client.println("<a class=\"time-btn\" href=\"/time?seconds=120\">2:00</a>");
-
-    if (ffaDurationSeconds == 180) client.println("<a class=\"time-btn active\" href=\"/time?seconds=180\">3:00</a>");
-    else client.println("<a class=\"time-btn\" href=\"/time?seconds=180\">3:00</a>");
+    client.println("<div style=\"display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:12px;\">");
+    client.println("<a class=\"time-btn\" href=\"/time/sub15\">- 15 sec</a>");
+    client.println("<div class=\"timer-value\" style=\"margin-bottom:0; min-width:90px;\">" + formatTime(getRemainingFFATime()) + "</div>");
+    client.println("<a class=\"time-btn\" href=\"/time/add15\">+ 15 sec</a>");
+    client.println("</div>");
 
     client.println("<div>");
-    client.println("<a class=\"timer-btn\" href=\"/timer/start\">Start</a>");
-    client.println("<a class=\"timer-btn\" href=\"/timer/stop\">Stop</a>");
-    client.println("<a class=\"timer-btn\" href=\"/timer/reset\">Reset</a>");
-    client.println("</div>");
+    client.println("<a class=\"timer-btn\" href=\"/timer/start\">Start Game</a>");
+    client.println("<a class=\"timer-btn\" href=\"/timer/stop\">Stop Game</a>");
     client.println("</div>");
   }
 
@@ -869,7 +842,7 @@ void setup() {
   WiFi.mode(WIFI_AP);
   delay(200);
 
-  bool ok = WiFi.softAP(ssid, password, 6, 0, 8);
+  bool ok = WiFi.softAP(ssid, password);
   Serial.print("softAP result: ");
   Serial.println(ok ? "SUCCESS" : "FAIL");
 

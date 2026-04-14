@@ -184,11 +184,11 @@ void fireShot() {
   Serial.println(assignedPlayerId);
 }
 
-/*
-  Check IR receiver for hits.
-  When hit, decode the attacker's player ID
-  from the IR signal and report it to the host.
-*/
+void handleTrigger() {
+}
+
+void handleHits() {
+}
 
 void setup() {
   Serial.begin(115200);
@@ -198,6 +198,5 @@ void setup() {
 void loop() {
   handleHostMessages();
   handleTrigger();
-  handleIncomingHits();
-  updateStatusLed();
+  handleHits();
 }
