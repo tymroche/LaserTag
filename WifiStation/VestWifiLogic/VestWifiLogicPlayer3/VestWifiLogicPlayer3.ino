@@ -8,8 +8,8 @@ const uint16_t hostPort = 3333;
 
 WiFiClient hostClient;
 
-String vestDeviceId = "vestA";
-String playerName = "Player 1";
+String vestDeviceId = "vestC";
+String playerName = "Player 3";
 String assignedPlayerId = "";
 
 bool canShoot = true;

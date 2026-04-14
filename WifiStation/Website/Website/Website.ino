@@ -648,7 +648,17 @@ void handleBrowserAction(String req) {
 }
 
 
+//fix additional clicks bug
 
+void redirectToHome(WiFiClient& client) {
+  client.println("HTTP/1.1 303 See Other");
+  client.println("Location: /");
+  client.println("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+  client.println("Pragma: no-cache");
+  client.println("Expires: 0");
+  client.println("Connection: close");
+  client.println();
+}
 
 
 
@@ -793,6 +803,7 @@ void handleWebClients() {
   if (!client) return;
 
   String currentLine = "";
+  String requestLine = "";
 
   while (client.connected()) {
     if (client.available()) {
@@ -800,13 +811,34 @@ void handleWebClients() {
       header += c;
 
       if (c == '\n') {
+        if (requestLine.length() == 0 && currentLine.length() > 0) {
+          requestLine = currentLine;
+        }
+
         if (currentLine.length() == 0) {
           Serial.print("Stations: ");
           Serial.print(WiFi.softAPgetStationNum());
           Serial.println(" | New Client");
 
+          bool isActionRequest =
+            requestLine.indexOf("GET /join?name=") >= 0 ||
+            requestLine.indexOf("GET /mode/ffa") >= 0 ||
+            requestLine.indexOf("GET /mode/duels") >= 0 ||
+            requestLine.indexOf("GET /remove?slot=") >= 0 ||
+            requestLine.indexOf("GET /clear") >= 0 ||
+            requestLine.indexOf("GET /time/add15") >= 0 ||
+            requestLine.indexOf("GET /time/sub15") >= 0 ||
+            requestLine.indexOf("GET /timer/start") >= 0 ||
+            requestLine.indexOf("GET /timer/stop") >= 0 ||
+            requestLine.indexOf("GET /timer/reset") >= 0;
+
           handleBrowserAction(header);
-          serveWebPage(client);
+
+          if (isActionRequest) {
+            redirectToHome(client);
+          } else {
+            serveWebPage(client);
+          }
           break;
         } else {
           currentLine = "";
