@@ -42,6 +42,7 @@ inline void receiveTimeOffset() {
 typedef enum {
   INVALID_INPUT,
   BAD_WRITE,
+  START_ERROR,
   PARITY_ERROR,
   STATUS_OK
 } status_t;
@@ -55,7 +56,7 @@ uint8_t data = 0x0;
 
 // ~~~ Temp Variables for Testing ~~~
 int numTrigger = 0;
-uint8_t transmitTest = 0b01000000;
+uint8_t transmitTest = 0xFF;
 
 
 // Forward Declarations
@@ -74,8 +75,9 @@ void IRAM_ATTR trigger_isr() {
 }
 
 void IRAM_ATTR receiver_isr() {
-  digitalWrite(7, 1);
-  emitter_read(&data);
+  if (emitter_read(&data) == STATUS_OK) {
+    digitalWrite(7,1);
+  };
 }
 
 /** 
@@ -134,21 +136,32 @@ status_t emitter_read(uint8_t* buffer) {
   uint8_t numHighBits = 0;
 
   // Start Bits
-  receiveDelay();
+  if (digitalRead(RECEIVER_IN))  {    // Should return low.
+    return START_ERROR;
+  }
   receiveDelay();
 
   // Offset to center readings
   receiveTimeOffset();
 
   // Data Bits
-  for (uint8_t i = 0; i < 8; i++) {
-    uint8_t val = !digitalRead(RECEIVER_IN);
-    *buffer |= (val << i);
-    if (val) {
-      numHighBits++;
-    }
-    receiveDelay();
-  }
+  // for (uint8_t i = 0; i < 8; i++) {
+  //   uint8_t val = !digitalRead(RECEIVER_IN);
+  //   *buffer |= (val << i);
+  //   if (val) {
+  //     numHighBits++;
+  //   }
+  //   receiveDelay();
+  // }
+  *buffer |= !digitalRead(RECEIVER_IN);  // Just set to first bit. See if high. IT IS NOT HIGH WHAT THE HELL. ENDED TESTING HERE
+  receiveDelay();
+  receiveDelay();
+  receiveDelay();
+  receiveDelay();
+  receiveDelay();
+  receiveDelay();
+  receiveDelay();
+  receiveDelay();
 
 
   // Parity Bit
@@ -188,7 +201,6 @@ void setup() {
   // Attach PWM to Emitter Output
   pinMode(EMITTER_OUT, OUTPUT);
   ledcAttach(EMITTER_OUT, EMITTER_FREQ, PWM_RESOLUTION);
-
 
 
   // Test GPIO Pin
