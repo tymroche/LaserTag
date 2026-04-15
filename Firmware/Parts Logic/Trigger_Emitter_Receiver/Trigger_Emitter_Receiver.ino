@@ -49,6 +49,7 @@ typedef enum {
   INVALID_INPUT,
   BAD_WRITE,
   START_ERROR,
+  STOP_ERROR,
   PARITY_ERROR,
   STATUS_OK
 } status_t;
