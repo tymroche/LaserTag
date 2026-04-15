@@ -2,6 +2,7 @@
 #define BIT_TRANSMIT_TIME_US    562                             /** Time that 1 bit is transmitted for.  */   
 
 
+
 /** MACRO FUNCTIONS  */
 /** 
 * @brief Wrapper function for delayMicroseconds.
@@ -19,6 +20,7 @@ inline void receiveTimeOffset() {
 }
 
 
+
 /** ENUM DECLARATIONS  */
 /** Status Enum. See printStatus() for Serial Output. */
 typedef enum {
@@ -31,16 +33,19 @@ typedef enum {
 } status_t;
 
 
+
 /** GLOBAL VARIABLES  */
 // ISR Variables
 volatile bool rxFlag = false;
 // Temp Variables (Used for Testing)
-uint8_t data = 0;
+uint8_t receiveData = 0;
+
 
 
 /** FORWARD DECLARATIONS  */
 status_t receiverRead(volatile uint8_t* buffer);
 void printStatus(status_t status);
+
 
 
 /** INTERRUPT SERVICE ROUTINES (ISRs) */
@@ -52,11 +57,12 @@ void IRAM_ATTR receiver_isr() {
 }
 
 
+
 /** GENERAL PURPOSE FUNCTIONS */
 /** 
-* @brief Receives transmitted data. 
-* @param buffer Buffer to store read data in.
-* @return INVALID_INPUT if Data is Null, PARITY_ERROR if parity does not match, STATUS_OK if read successful.
+* @brief Receives transmitted receiveData. 
+* @param buffer Buffer to store read receiveData in.
+* @return INVALID_INPUT if receiveData is Null, PARITY_ERROR if parity does not match, STATUS_OK if read successful.
 * @note Receiver inverts all signals when demodulated.
 * @note Interrupt triggered via polled flag.
 * @note Reads in the middle of bit periods.
@@ -99,6 +105,7 @@ status_t receiverRead(volatile uint8_t* buffer) {
 }
 
 
+
 /** SETUP FUNCTIONS */
 /**
 * @brief Helper function that initializes Receiver Pin & Attaches ISR
@@ -108,6 +115,7 @@ void receiver_init() {
   pinMode(RECEIVER_IN, INPUT);
   attachInterrupt(RECEIVER_IN, receiver_isr, FALLING);
 }
+
 
 
 /** ARDUINO FUNCTIONS */
@@ -122,12 +130,13 @@ void setup() {
 
 void loop() {
   if (rxFlag) {
-    printStatus(receiverRead(&data));
-    Serial.printf("Received Data: %d\n", data);
+    printStatus(receiverRead(&receiveData));
+    Serial.printf("Received receiveData: %d\n", receiveData);
     Serial.flush();
     rxFlag = 0;
   }
 }
+
 
 
 /** PRINT FUNCTIONS */

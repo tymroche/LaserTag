@@ -7,6 +7,9 @@
 #define DUTY_CYCLE_0            0                               /** 0% Duty Cycle regardless of Resolution */
 #define BIT_TRANSMIT_TIME_US    562                             /** Time that 1 bit is transmitted for.  */   
 
+
+
+/** MACRO FUNCTIONS  */
 /** 
 * @brief Wrapper function for ledcWrite used.
 * @param duty Duty cycle to set PWM to. 
@@ -38,6 +41,9 @@ inline void receiveTimeOffset() {
   delayMicroseconds(BIT_TRANSMIT_TIME_US / 2);
 }
 
+
+
+/** ENUM DECLARATIONS  */
 /** Status Enum. */
 typedef enum {
   INVALID_INPUT,
@@ -47,31 +53,27 @@ typedef enum {
   STATUS_OK
 } status_t;
 
-// ~~~ GLOBAL VARIABLES ~~~
 
+
+/** GLOBAL VARIABLES  */
 // Trigger Debouncing 
 unsigned long lastTrigger = 0;
-
-
 volatile bool rxFlag = false;
-
-
-// ~~~ Temp Variables for Testing ~~~
+// Temp Variables (Used for Testing)
 volatile int numTrigger = 0;
-uint8_t transmitTest = 0b01010101;
-volatile uint8_t dataBuffer = 0x0;
-volatile uint8_t dataTester[8];
-
-unsigned long startTrigger = 0;
-unsigned long startData = 0;
-unsigned long elapsedTime = 0;
+uint8_t transmitData = 80;
+uint8_t receiveData = 0;
 
 
 
-// Forward Declarations
+/** FORWARD DECLARATIONS  */
 status_t emitter_write(uint8_t data);
-status_t emitter_read(volatile uint8_t* buffer);
+status_t receiverRead(volatile uint8_t* buffer);
+void printStatus(status_t status);
 
+
+
+/** INTERRUPT SERVICE ROUTINES (ISRs) */
 /**
 * @brief Interrupt Handler for trigger button. 
 * @note Includes debounce logic. 
@@ -79,14 +81,20 @@ status_t emitter_read(volatile uint8_t* buffer);
 void IRAM_ATTR trigger_isr() {
   if ((millis() - lastTrigger) < 200) return;
   lastTrigger = millis();
-  emitter_write(transmitTest);
+  emitter_write(transmitData);
   numTrigger++;
 }
 
+/**
+* @brief Interrupt Handler for receiver signal. 
+*/
 void IRAM_ATTR receiver_isr() {
   rxFlag = true;
 }
 
+
+
+/** GENERAL PURPOSE FUNCTIONS */
 /** 
 * @brief Transmits data over IR emitter. 
 * @param data Data to be written.
@@ -96,6 +104,7 @@ void IRAM_ATTR receiver_isr() {
 */
 status_t emitter_write(uint8_t data) {
 
+  // Initialize Local Variables
   uint8_t numHighBits = 0;
 
   // Transmit start bits (1 Low, 1 High)
@@ -117,12 +126,8 @@ status_t emitter_write(uint8_t data) {
     transmitDelay();
   }
 
-  // Caluclate & Transmit Parity Bit
-  if (numHighBits % 2) {
-    pwm_write(DUTY_CYCLE_50);
-  } else {
-    pwm_write(DUTY_CYCLE_0);
-  }
+  // Calculate & Transmit Parity Bit
+  pwm_write((numHighBits % 2) ? DUTY_CYCLE_50 : DUTY_CYCLE_0);
   transmitDelay();
 
   // Transmit stop bit (1 High)
@@ -135,92 +140,123 @@ status_t emitter_write(uint8_t data) {
   return STATUS_OK;
 }
 
-status_t emitter_read(volatile uint8_t* buffer) {
+/** 
+* @brief Receives transmitted receiveData. 
+* @param buffer Buffer to store read receiveData in.
+* @return INVALID_INPUT if receiveData is Null, PARITY_ERROR if parity does not match, STATUS_OK if read successful.
+* @note Receiver inverts all signals when demodulated.
+* @note Interrupt triggered via polled flag.
+* @note Reads in the middle of bit periods.
+*/
+status_t receiverRead(volatile uint8_t* buffer) {
   if (buffer == NULL) {
     return INVALID_INPUT;
   }
 
-  startTrigger = micros();
-
-  *buffer = 0;
+  // Initialize Local Variables
   uint8_t numHighBits = 0;
+  *buffer = 0;
 
-  // Start Bits
-  if (digitalRead(RECEIVER_IN))  {    // Should return low.
-    return START_ERROR;
-  }
-  receiveDelay();
+  // Centers read to middle of bit period
   receiveTimeOffset();
 
-  startData = micros();
-  elapsedTime = startData - startTrigger;
+  // Reads bits & Stores in buffer
   for (int i = 0; i < 8; i++) {
-    dataTester[i] = digitalRead(RECEIVER_IN);
     receiveDelay();
+    uint8_t currVal = !digitalRead(RECEIVER_IN);
+    *buffer |=  (currVal << i);
+    if (currVal) {
+      numHighBits ++;
+    }
   }
 
-  // Offset to center readings
-  // receiveTimeOffset();
+  // Compares Parity Bit
+    receiveDelay();    
+    if (!digitalRead(RECEIVER_IN) != (numHighBits % 2)) { // compare parity
+      return PARITY_ERROR;
+    }
 
-  // // Data Bits
-  // for (uint8_t i = 0; i < 8; i++) {
-  //   uint8_t val = !digitalRead(RECEIVER_IN);
-  //   dataTester |= (val << i);
-  //   if (val) {
-  //     numHighBits++;
-  //   }
-  //   receiveDelay();
-  // }
-
-
-  // // Parity Bit
-  // uint8_t parityActual = !digitalRead(RECEIVER_IN);
-  // uint8_t parityGoal = numHighBits % 2;
-
-  // if (parityActual != parityGoal) {
-  //   return PARITY_ERROR;
-  // }
-  // receiveDelay();
-
-  // // Stop Bit
-  // receiveDelay();
+  // Checks Stop Bit
+  receiveDelay();
+  if (digitalRead(RECEIVER_IN)) {
+    return STOP_ERROR;
+  }
 
   return STATUS_OK;
 }
 
+
+
+/** SETUP FUNCTIONS */
+/**
+ * @brief Helper function that initializes Trigger Pin & Attaches ISR
+ * @note Used in setup
+ */
+void trigger_init() {
+  pinMode(TRIGGER_SWITCH, INPUT_PULLDOWN);
+  attachInterrupt(TRIGGER_SWITCH, trigger_isr, RISING);
+}
+
+/**
+ * @brief Helper function that initializes Emitter Pin & Attaches PWM
+ * @note Used in setup
+ */
+void emitter_init() {
+  pinMode(EMITTER_OUT, OUTPUT);
+  ledcAttach(EMITTER_OUT, EMITTER_FREQ, PWM_RESOLUTION);
+}
+
+/**
+* @brief Helper function that initializes Receiver Pin & Attaches ISR
+* @note Used in setup
+*/
+void receiver_init() {
+  pinMode(RECEIVER_IN, INPUT);
+  attachInterrupt(RECEIVER_IN, receiver_isr, FALLING);
+}
+
+
+
+/** ARDUINO FUNCTIONS */
 void setup() {
   // Initializes Serial Debugging
   Serial.begin(115200);
   Serial.println("Serial Initialized!");
 
-  // Attaches trigger interrupt
-  pinMode(TRIGGER_SWITCH, INPUT_PULLDOWN);
-  attachInterrupt(TRIGGER_SWITCH, trigger_isr, RISING);
+  // Initialize Trigger
+  trigger_init();
+
+  // Initialize Emitter
+  emitter_init();
 
   // Initialize Receiver
-  pinMode(RECEIVER_IN, INPUT);
-  attachInterrupt(RECEIVER_IN, receiver_isr, FALLING);
-
-  // Attach PWM to Emitter Output
-  pinMode(EMITTER_OUT, OUTPUT);
-  ledcAttach(EMITTER_OUT, EMITTER_FREQ, PWM_RESOLUTION);
-
-
-  // Test GPIO Pin
-  pinMode(7, OUTPUT);
-  digitalWrite(7, 0);
+  receiver_init();
 }
 
-void loop() {
+void loop() {  
   if (rxFlag) {
-    rxFlag = false;
-    emitter_read(&dataBuffer);
+    printStatus(receiverRead(&receiveData));
+    Serial.printf("Received receiveData: %d\n", receiveData);
+    Serial.flush();
+    rxFlag = 0;
   }
-  Serial.printf("\nBits: [%d, %d, %d, %d, %d, %d, %d, %d]\n", 
-    dataTester[0], dataTester[1], dataTester[2], dataTester[3],
-    dataTester[4], dataTester[5], dataTester[6], dataTester[7]);  
-  // Serial.println(numTrigger);
-  Serial.printf("\nElapsed Time: %d", elapsedTime);
+}
 
 
+
+/** PRINT FUNCTIONS */
+/** 
+* @brief Helper function to print based on status.
+* @param status Status to print.
+*/
+void printStatus(status_t status) {
+  switch (status) {
+    case INVALID_INPUT: Serial.println("Status: INVALID_INPUT");  break;
+    case BAD_WRITE:     Serial.println("Status: BAD_WRITE");      break;
+    case START_ERROR:   Serial.println("Status: START_ERROR");    break;
+    case PARITY_ERROR:  Serial.println("Status: PARITY_ERROR");   break;
+    case STOP_ERROR:    Serial.println("Status: STOP_ERROR");     break;
+    case STATUS_OK:     Serial.println("Status: OK");             break;
+    default:            Serial.println("Status: UNKNOWN");        break;
+  }
 }

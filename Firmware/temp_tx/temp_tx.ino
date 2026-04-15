@@ -6,6 +6,8 @@
 #define DUTY_CYCLE_0            0                               /** 0% Duty Cycle regardless of Resolution */
 #define BIT_TRANSMIT_TIME_US    562                             /** Time that 1 bit is transmitted for.  */   
 
+
+
 /** MACRO FUNCTIONS  */
 /** 
 * @brief Wrapper function for ledcWrite used.
@@ -24,6 +26,7 @@ inline void transmitDelay() {
 }
 
 
+
 /** ENUM DECLARATIONS  */
 /** Status Enum. */
 typedef enum {
@@ -35,6 +38,7 @@ typedef enum {
 } status_t;
 
 
+
 /** GLOBAL VARIABLES  */
 // Trigger Debouncing 
 unsigned long lastTrigger = 0;
@@ -43,8 +47,10 @@ volatile int numTrigger = 0;
 uint8_t transmitData = 80;  // Max 255
 
 
+
 /** FORWARD DECLARATIONS  */
 status_t emitter_write(uint8_t data);
+
 
 
 /** INTERRUPT SERVICE ROUTINES (ISRs) */
@@ -58,6 +64,7 @@ void IRAM_ATTR trigger_isr() {
   emitter_write(transmitData);
   numTrigger++;
 }
+
 
 
 /** GENERAL PURPOSE FUNCTIONS */
@@ -107,6 +114,7 @@ status_t emitter_write(uint8_t data) {
 }
 
 
+
 /** SETUP FUNCTIONS */
 /**
  * @brief Helper function that initializes Trigger Pin & Attaches ISR
@@ -125,6 +133,8 @@ void emitter_init() {
   pinMode(EMITTER_OUT, OUTPUT);
   ledcAttach(EMITTER_OUT, EMITTER_FREQ, PWM_RESOLUTION);
 }
+
+
 
 /** ARDUINO FUNCTIONS */
 void setup() {
