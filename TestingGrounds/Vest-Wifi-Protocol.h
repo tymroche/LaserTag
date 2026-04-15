@@ -14,13 +14,15 @@
  #ifndef VEST_WIFI_PROTOCOL
  #define VEST_WIFI_PROTOCOL
 
- #include <Wifi.h>
+ #include <WiFi.h>
 
 extern const char* hostSsid;
 extern const char* hostPassword;
 
-extern IPAddress hostIP(192, 168, 4, 1);
+extern IPAddress hostIP;
 extern const uint16_t hostPort;
+
+extern WiFiClient hostClient;
 
 //unique to hardware
 extern String vestDeviceId;
@@ -96,6 +98,6 @@ void reportHitToHost(const String& attackerPlayerId);
 /**
  * @brief Attempts to fire and prints player ID when firing is allowed.
  */
-void fireShot()
+void fireShot();
 
  #endif
