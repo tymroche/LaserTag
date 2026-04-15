@@ -1,6 +1,5 @@
 #define TRIGGER_SWITCH          2                               /** Trigger SPST Input (triggers interrupt) */
 #define EMITTER_OUT             3                               /** PWM Output to Emitter */
-#define RECEIVER_IN             6                               /** IR Receiver Input */
 #define EMITTER_FREQ            38000                           /** Frequency of PWM Output */
 #define PWM_RESOLUTION          8                               /** Resolution for PWM Duty Cycle */
 #define DUTY_CYCLE_50           ((1 <<  PWM_RESOLUTION) / 2)    /** 50% Duty Cycle based on Resolution */
@@ -23,20 +22,6 @@ inline void transmitDelay() {
   delayMicroseconds(BIT_TRANSMIT_TIME_US);
 }
 
-/** 
-* @brief Wrapper function for delayMicroseconds.
-* @note Used for Bit Reception. 
-*/
-inline void receiveDelay() {
-  delayMicroseconds(BIT_TRANSMIT_TIME_US);
-}
-
-/** 
-* @brief Wrapper function for delayMicroseconds. 
-* @note Used for Reception Timing Offset to center readings. */
-inline void receiveTimeOffset() {
-  delayMicroseconds(BIT_TRANSMIT_TIME_US / 2);
-}
 
 /** Status Enum. */
 typedef enum {
@@ -58,19 +43,12 @@ volatile bool rxFlag = false;
 
 // ~~~ Temp Variables for Testing ~~~
 volatile int numTrigger = 0;
-uint8_t transmitTest = 0b01010101;
-volatile uint8_t dataBuffer = 0x0;
-volatile uint8_t dataTester[8];
-
-unsigned long startTrigger = 0;
-unsigned long startData = 0;
-unsigned long elapsedTime = 0;
+uint8_t transmitData = 0;  // Max 255
 
 
 
 // Forward Declarations
 status_t emitter_write(uint8_t data);
-status_t emitter_read(volatile uint8_t* buffer);
 
 /**
 * @brief Interrupt Handler for trigger button. 
@@ -79,13 +57,10 @@ status_t emitter_read(volatile uint8_t* buffer);
 void IRAM_ATTR trigger_isr() {
   if ((millis() - lastTrigger) < 200) return;
   lastTrigger = millis();
-  emitter_write(transmitTest);
+  emitter_write(transmitData);
   numTrigger++;
 }
 
-void IRAM_ATTR receiver_isr() {
-  rxFlag = true;
-}
 
 /** 
 * @brief Transmits data over IR emitter. 
@@ -95,6 +70,8 @@ void IRAM_ATTR receiver_isr() {
 * @note Bit period of 21 cycles. 21 Cycles @ 38kHz will transmit 1 bit. Baud: 1809 bits / sec.
 */
 status_t emitter_write(uint8_t data) {
+
+  digitalWrite(7, 1);
 
   uint8_t numHighBits = 0;
 
@@ -117,12 +94,16 @@ status_t emitter_write(uint8_t data) {
     transmitDelay();
   }
 
-  // Caluclate & Transmit Parity Bit
+  // Caluclate & Transmit Parity Bit [CONDENSE THIS, TERNARY IN PWM_WRITE()]
   if (numHighBits % 2) {
     pwm_write(DUTY_CYCLE_50);
   } else {
     pwm_write(DUTY_CYCLE_0);
   }
+
+  /**
+  * pwm_write((numHighBits % 2) ? DUTY_CYCLE_50 : DUTY_CYCLE_0);
+  */
   transmitDelay();
 
   // Transmit stop bit (1 High)
@@ -131,59 +112,6 @@ status_t emitter_write(uint8_t data) {
 
   // Idle Low
   pwm_write(DUTY_CYCLE_0);
-
-  return STATUS_OK;
-}
-
-status_t emitter_read(volatile uint8_t* buffer) {
-  if (buffer == NULL) {
-    return INVALID_INPUT;
-  }
-
-  startTrigger = micros();
-
-  *buffer = 0;
-  uint8_t numHighBits = 0;
-
-  // Start Bits
-  if (digitalRead(RECEIVER_IN))  {    // Should return low.
-    return START_ERROR;
-  }
-  receiveDelay();
-  receiveTimeOffset();
-
-  startData = micros();
-  elapsedTime = startData - startTrigger;
-  for (int i = 0; i < 8; i++) {
-    dataTester[i] = digitalRead(RECEIVER_IN);
-    receiveDelay();
-  }
-
-  // Offset to center readings
-  // receiveTimeOffset();
-
-  // // Data Bits
-  // for (uint8_t i = 0; i < 8; i++) {
-  //   uint8_t val = !digitalRead(RECEIVER_IN);
-  //   dataTester |= (val << i);
-  //   if (val) {
-  //     numHighBits++;
-  //   }
-  //   receiveDelay();
-  // }
-
-
-  // // Parity Bit
-  // uint8_t parityActual = !digitalRead(RECEIVER_IN);
-  // uint8_t parityGoal = numHighBits % 2;
-
-  // if (parityActual != parityGoal) {
-  //   return PARITY_ERROR;
-  // }
-  // receiveDelay();
-
-  // // Stop Bit
-  // receiveDelay();
 
   return STATUS_OK;
 }
@@ -197,10 +125,6 @@ void setup() {
   pinMode(TRIGGER_SWITCH, INPUT_PULLDOWN);
   attachInterrupt(TRIGGER_SWITCH, trigger_isr, RISING);
 
-  // Initialize Receiver
-  pinMode(RECEIVER_IN, INPUT);
-  attachInterrupt(RECEIVER_IN, receiver_isr, FALLING);
-
   // Attach PWM to Emitter Output
   pinMode(EMITTER_OUT, OUTPUT);
   ledcAttach(EMITTER_OUT, EMITTER_FREQ, PWM_RESOLUTION);
@@ -211,16 +135,4 @@ void setup() {
   digitalWrite(7, 0);
 }
 
-void loop() {
-  if (rxFlag) {
-    rxFlag = false;
-    emitter_read(&dataBuffer);
-  }
-  Serial.printf("\nBits: [%d, %d, %d, %d, %d, %d, %d, %d]\n", 
-    dataTester[0], dataTester[1], dataTester[2], dataTester[3],
-    dataTester[4], dataTester[5], dataTester[6], dataTester[7]);  
-  // Serial.println(numTrigger);
-  Serial.printf("\nElapsed Time: %d", elapsedTime);
-
-
-}
+void loop() { }
