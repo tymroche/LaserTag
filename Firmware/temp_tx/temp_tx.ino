@@ -6,6 +6,7 @@
 #define DUTY_CYCLE_0            0                               /** 0% Duty Cycle regardless of Resolution */
 #define BIT_TRANSMIT_TIME_US    562                             /** Time that 1 bit is transmitted for.  */   
 
+/** MACRO FUNCTIONS  */
 /** 
 * @brief Wrapper function for ledcWrite used.
 * @param duty Duty cycle to set PWM to. 
@@ -23,6 +24,7 @@ inline void transmitDelay() {
 }
 
 
+/** ENUM DECLARATIONS  */
 /** Status Enum. */
 typedef enum {
   INVALID_INPUT,
@@ -32,24 +34,20 @@ typedef enum {
   STATUS_OK
 } status_t;
 
-// ~~~ GLOBAL VARIABLES ~~~
 
+/** GLOBAL VARIABLES  */
 // Trigger Debouncing 
 unsigned long lastTrigger = 0;
-
-
-volatile bool rxFlag = false;
-
-
-// ~~~ Temp Variables for Testing ~~~
+// Temp Variables (Used for Testing)
 volatile int numTrigger = 0;
-uint8_t transmitData = 0;  // Max 255
+uint8_t transmitData = 80;  // Max 255
 
 
-
-// Forward Declarations
+/** FORWARD DECLARATIONS  */
 status_t emitter_write(uint8_t data);
 
+
+/** INTERRUPT SERVICE ROUTINES (ISRs) */
 /**
 * @brief Interrupt Handler for trigger button. 
 * @note Includes debounce logic. 
@@ -62,6 +60,7 @@ void IRAM_ATTR trigger_isr() {
 }
 
 
+/** GENERAL PURPOSE FUNCTIONS */
 /** 
 * @brief Transmits data over IR emitter. 
 * @param data Data to be written.
@@ -71,8 +70,7 @@ void IRAM_ATTR trigger_isr() {
 */
 status_t emitter_write(uint8_t data) {
 
-  digitalWrite(7, 1);
-
+  // Initialize Local Variables
   uint8_t numHighBits = 0;
 
   // Transmit start bits (1 Low, 1 High)
@@ -94,16 +92,8 @@ status_t emitter_write(uint8_t data) {
     transmitDelay();
   }
 
-  // Caluclate & Transmit Parity Bit [CONDENSE THIS, TERNARY IN PWM_WRITE()]
-  if (numHighBits % 2) {
-    pwm_write(DUTY_CYCLE_50);
-  } else {
-    pwm_write(DUTY_CYCLE_0);
-  }
-
-  /**
-  * pwm_write((numHighBits % 2) ? DUTY_CYCLE_50 : DUTY_CYCLE_0);
-  */
+  // Calculate & Transmit Parity Bit
+  pwm_write((numHighBits % 2) ? DUTY_CYCLE_50 : DUTY_CYCLE_0);
   transmitDelay();
 
   // Transmit stop bit (1 High)
@@ -116,23 +106,37 @@ status_t emitter_write(uint8_t data) {
   return STATUS_OK;
 }
 
+
+/** SETUP FUNCTIONS */
+/**
+ * @brief Helper function that initializes Trigger Pin & Attaches ISR
+ * @note Used in setup
+ */
+void trigger_init() {
+  pinMode(TRIGGER_SWITCH, INPUT_PULLDOWN);
+  attachInterrupt(TRIGGER_SWITCH, trigger_isr, RISING);
+}
+
+/**
+ * @brief Helper function that initializes Emitter Pin & Attaches PWM
+ * @note Used in setup
+ */
+void emitter_init() {
+  pinMode(EMITTER_OUT, OUTPUT);
+  ledcAttach(EMITTER_OUT, EMITTER_FREQ, PWM_RESOLUTION);
+}
+
+/** ARDUINO FUNCTIONS */
 void setup() {
   // Initializes Serial Debugging
   Serial.begin(115200);
   Serial.println("Serial Initialized!");
 
-  // Attaches trigger interrupt
-  pinMode(TRIGGER_SWITCH, INPUT_PULLDOWN);
-  attachInterrupt(TRIGGER_SWITCH, trigger_isr, RISING);
+  // Initialize Trigger
+  trigger_init();
 
-  // Attach PWM to Emitter Output
-  pinMode(EMITTER_OUT, OUTPUT);
-  ledcAttach(EMITTER_OUT, EMITTER_FREQ, PWM_RESOLUTION);
-
-
-  // Test GPIO Pin
-  pinMode(7, OUTPUT);
-  digitalWrite(7, 0);
+  // Initialize Emitter
+  emitter_init();
 }
 
 void loop() { }
