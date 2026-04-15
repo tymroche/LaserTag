@@ -1,54 +1,59 @@
-#define RECEIVER_IN             6                               /** IR Receiver Input */
-#define BIT_TRANSMIT_TIME_US    562                             /** Time that 1 bit is transmitted for.  */   
-
+#include "player_comms.h"
 
 
 /** MACRO FUNCTIONS  */
 /** 
+* @brief Wrapper function for ledcWrite used.
+* @param duty Duty cycle to set PWM to. 
+*/
+static inline void pwm_write(uint8_t duty) {
+  ledcWrite(EMITTER_OUT, duty);
+}
+
+/** 
+* @brief Wrapper functin for delayMicroseconds. 
+* @note Used for Bit Transmission. 
+*/
+static inline void transmitDelay() {
+  delayMicroseconds(BIT_TRANSMIT_TIME_US);
+}
+
+/** 
 * @brief Wrapper function for delayMicroseconds.
 * @note Used for Bit Reception. 
 */
-inline void receiveDelay() {
+static inline void receiveDelay() {
   delayMicroseconds(BIT_TRANSMIT_TIME_US);
 }
 
 /** 
 * @brief Wrapper function for delayMicroseconds. 
 * @note Used for Reception Timing Offset to center readings. */
-inline void receiveTimeOffset() {
+static inline void receiveTimeOffset() {
   delayMicroseconds(BIT_TRANSMIT_TIME_US / 2);
 }
 
 
-
-/** ENUM DECLARATIONS  */
-/** Status Enum. See printStatus() for Serial Output. */
-typedef enum {
-  INVALID_INPUT,
-  BAD_WRITE,
-  START_ERROR,
-  PARITY_ERROR,
-  STOP_ERROR,
-  STATUS_OK
-} status_t;
-
-
-
 /** GLOBAL VARIABLES  */
-// ISR Variables
+// Trigger Debouncing 
+unsigned long lastTrigger = 0;
+// Data Transmission
 volatile bool rxFlag = false;
-// Temp Variables (Used for Testing)
 uint8_t receiveData = 0;
-
-
-
-/** FORWARD DECLARATIONS  */
-status_t receiverRead(volatile uint8_t* buffer);
-void printStatus(status_t status);
-
+uint8_t transmitData = 0;
 
 
 /** INTERRUPT SERVICE ROUTINES (ISRs) */
+/**
+* @brief Interrupt Handler for trigger button. 
+* @note Includes debounce logic. 
+*/
+void IRAM_ATTR trigger_isr() {
+  if ((millis() - lastTrigger) < 200) return;
+  lastTrigger = millis();
+  emitter_write(transmitData);
+}
+
 /**
 * @brief Interrupt Handler for receiver signal. 
 */
@@ -57,16 +62,45 @@ void IRAM_ATTR receiver_isr() {
 }
 
 
-
 /** GENERAL PURPOSE FUNCTIONS */
-/** 
-* @brief Receives transmitted receiveData. 
-* @param buffer Buffer to store read receiveData in.
-* @return INVALID_INPUT if receiveData is Null, PARITY_ERROR if parity does not match, STATUS_OK if read successful.
-* @note Receiver inverts all signals when demodulated.
-* @note Interrupt triggered via polled flag.
-* @note Reads in the middle of bit periods.
-*/
+status_t emitter_write(uint8_t data) {
+
+  // Initialize Local Variables
+  uint8_t numHighBits = 0;
+
+  // Transmit start bits (1 Low, 1 High)
+  pwm_write(DUTY_CYCLE_0);
+  transmitDelay();
+
+  pwm_write(DUTY_CYCLE_50);
+  transmitDelay();
+
+  // Transmit data bits (8 Total) LSB First
+  for (uint8_t i = 0; i < 8; i++) {
+    if (data & 0x1) {
+      pwm_write(DUTY_CYCLE_50);
+      numHighBits++;
+    } else {
+      pwm_write(DUTY_CYCLE_0);
+    }
+    data >>= 0x1;
+    transmitDelay();
+  }
+
+  // Calculate & Transmit Parity Bit
+  pwm_write((numHighBits % 2) ? DUTY_CYCLE_50 : DUTY_CYCLE_0);
+  transmitDelay();
+
+  // Transmit stop bit (1 High)
+  pwm_write(DUTY_CYCLE_50);
+  transmitDelay();
+
+  // Idle Low
+  pwm_write(DUTY_CYCLE_0);
+
+  return STATUS_OK;
+}
+
 status_t receiverRead(volatile uint8_t* buffer) {
   if (buffer == NULL) {
     return INVALID_INPUT;
@@ -105,45 +139,24 @@ status_t receiverRead(volatile uint8_t* buffer) {
 }
 
 
-
 /** SETUP FUNCTIONS */
-/**
-* @brief Helper function that initializes Receiver Pin & Attaches ISR
-* @note Used in setup
-*/
+void trigger_init() {
+  pinMode(TRIGGER_SWITCH, INPUT_PULLDOWN);
+  attachInterrupt(TRIGGER_SWITCH, trigger_isr, RISING);
+}
+
+void emitter_init() {
+  pinMode(EMITTER_OUT, OUTPUT);
+  ledcAttach(EMITTER_OUT, EMITTER_FREQ, PWM_RESOLUTION);
+}
+
 void receiver_init() {
   pinMode(RECEIVER_IN, INPUT);
   attachInterrupt(RECEIVER_IN, receiver_isr, FALLING);
 }
 
 
-
-/** ARDUINO FUNCTIONS */
-void setup() {
-  // Initializes Serial Debugging
-  Serial.begin(115200);
-  Serial.println("Serial Initialized!");
-
-  // Initialize Receiver
-  receiver_init();
-}
-
-void loop() {
-  if (rxFlag) {
-    printStatus(receiverRead(&receiveData));
-    Serial.printf("Received receiveData: %d\n", receiveData);
-    Serial.flush();
-    rxFlag = 0;
-  }
-}
-
-
-
 /** PRINT FUNCTIONS */
-/** 
-* @brief Helper function to print based on status.
-* @param status Status to print.
-*/
 void printStatus(status_t status) {
   switch (status) {
     case INVALID_INPUT: Serial.println("Status: INVALID_INPUT");  break;
