@@ -14,11 +14,13 @@
 #include <WiFi.h>
 #include "Vest-Wifi-Protocol.h"
 
-const char* hostSsid = "ESP32S3-Soft-AP";
+const char* hostSsid = "LaserTagSoftAP";
 const char* hostPassword = "lasertag";
 
 IPAddress hostIP(192, 168, 4, 1);
 const uint16_t hostPort = 27015;
+
+WiFiClient hostClient;
 
 //unique to hardware, ESP32 
 String vestDeviceId = "vestA";

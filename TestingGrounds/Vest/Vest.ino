@@ -26,6 +26,7 @@ void setup() {
  * @brief main super loop
  */
 void loop() {
+  connectVestToHost();
   handleHostMessages();
   updateRedBlink();
 }

@@ -15,12 +15,12 @@
 #define HOST_SERVER_H
 
 #include <WiFi.h>
+#define MAX_PLAYERS 4
 
 extern String header;
 extern String gameMode;
 extern String statusMessage;
 
-extern const int MAX_PLAYERS;
 extern const int STARTING_HP;
 extern const int STARTING_FFA_POINTS;
 extern const int FFA_HIT_GAIN;

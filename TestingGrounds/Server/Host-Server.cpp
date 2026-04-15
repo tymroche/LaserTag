@@ -14,13 +14,17 @@
 #include <WiFi.h>
 #include "Host-Server.h"
 
-const char* ssid = "LaserTagSoftAP"
-const char* password = "lasertag"
+const char* ssid = "LaserTagSoftAP";
+const char* password = "lasertag";
 
 WiFiServer webServer(80); //Socket on port 80 for HTTP requests.
 WiFiServer deviceServer(27015); //Socket on port 27015 for TCP requests between player and host.
 
-const int MAX_PLAYERS = 4;
+String header = "";
+Player players[MAX_PLAYERS];
+WiFiClient deviceClients[MAX_PLAYERS];
+int rankedPlayers[MAX_PLAYERS];
+
 const int STARTING_HP = 5;
 const int STARTING_FFA_POINTS = 0;
 const int FFA_HIT_GAIN = 100;
