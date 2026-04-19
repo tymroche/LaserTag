@@ -1,5 +1,5 @@
 /**
- * @file Vest.ino
+ * @file Vest2.ino
  * @author Alfonso Landaverde, Tyler Roche
  * @date 4/15/2026
  * @version 1.0
@@ -52,7 +52,7 @@ void loop() {
   connectVestToHost();
   handleHostMessages();
   transmitData = playerIdToByte(assignedPlayerId);
-
+  //transmitData = 85;
   if (triggerFlag) {
     triggerFlag = false;
 

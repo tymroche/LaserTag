@@ -6,13 +6,14 @@
 
 /** PIN + CONFIG MACROS */
 #define TRIGGER_SWITCH          2                               /** Trigger SPST Input (triggers interrupt) */
-#define EMITTER_OUT             4    //previously 3                           /** PWM Output to Emitter */
+#define EMITTER_OUT             4                               /** PWM Output to Emitter */
 #define RECEIVER_IN             6                               /** IR Receiver Input */
 #define EMITTER_FREQ            38000                           /** Frequency of PWM Output */
 #define PWM_RESOLUTION          8                               /** Resolution for PWM Duty Cycle */
 #define DUTY_CYCLE_50           ((1 <<  PWM_RESOLUTION) / 2)    /** 50% Duty Cycle based on Resolution */
 #define DUTY_CYCLE_0            0                               /** 0% Duty Cycle regardless of Resolution */
-#define BIT_TRANSMIT_TIME_US    1000                             /** Time that 1 bit is transmitted for.  */   // OG 562 us   // for some reason 160us overhead per bit. must seperate transmit bit time and rexeive bit time.m 
+#define BIT_TRANSMIT_TIME_US    562                             /** Time that 1 bit is transmitted for.  */   
+#define BIT_RECEIVE_TIME_US     750                             /** Time that 1 bit is detected as received. */
 
 
 /** ENUM DECLARATIONS  */
@@ -46,6 +47,17 @@ void emitter_init();
 */
 void receiver_init();
 
+/**
+ * @brief Helper function that turns string id into bits
+ * @return bit version of id
+ */
+uint8_t playerIdToByte(const String& id);
+
+/**
+ * @brief Helper function that turns bits back into string id
+ * @return string version of id
+ */
+String byteToPlayerId(uint8_t idvalue);
 
 /** GENERAL PURPOSE FUNCTIONS */
 /** 
@@ -79,5 +91,5 @@ void printStatus(status_t status);
 extern volatile bool rxFlag;
 extern uint8_t transmitData;
 extern uint8_t receiveData;
-
+extern volatile bool triggerFlag;
 #endif

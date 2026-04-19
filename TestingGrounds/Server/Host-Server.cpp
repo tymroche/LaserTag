@@ -84,22 +84,15 @@ String getQueryValue(String req, String key) {
   return decodeUrl(req.substring(start, end)); //return parsed value
 }
 
-/*
-  Convert a player slot number to the assigned IR/player ID.
-  slot 0 x01
-  slot 1 x02
-  slot 2 x03
-  slot 3 x04
-*/
+
 /**
  * @brief Converts player slot index to assigned player ID for IR.
  * @param slot player slot index.
- * @return Player ID (x01-x04) for valid slots, or an empty string for an invalid slot.
+ * @return Player ID for valid slots, or an empty string for an invalid slot.
  */
 String slotToPlayerId(int slot) {
   if (slot < 0 || slot >= MAX_PLAYERS) return "";
-  if (slot < 3) return "x0" + String(slot + 1);
-  return "x" + String(slot + 1);
+  return String(slot + 1);
 }
 
 /**
@@ -451,21 +444,6 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
     return;
   }
 
-  int existingName = findPlayerByName(name);
-  if (existingName >= 0) {
-    if (deviceClients[existingName]) {
-      deviceClients[existingName].stop();
-    }
-    deviceClients[existingName] = client;
-    players[existingName].vestDeviceId = vestDeviceId;
-    if (players[existingName].playerId == "") {
-      players[existingName].playerId = slotToPlayerId(existingName);
-    }
-    statusMessage = name + " device linked as " + players[existingName].playerId + ".";
-    sendStateToPlayer(existingName);
-    return;
-  }
-
   int slot = findOpenSlot();
   if (slot < 0) {
     client.println("STATE PLAYERID= MODE=" + gameMode + " ALIVE=0 CANSHOOT=0 HP=0 SCORE=0 TIMER=0");
@@ -549,6 +527,11 @@ void processHitReport(int targetIndex, String attackerId) {
  * @brief Accepts new vest TCP connections and processes messages from connected vests.
  */
 void handleDeviceConnections() {
+  for (int i = 0; i < MAX_PLAYERS; i++) {
+    if (players[i].active && deviceClients[i] && !deviceClients[i].connected()) {
+      deviceClients[i].stop();
+    }
+  }
   WiFiClient newClient = deviceServer.available();
 
   if (newClient) { // new connection message

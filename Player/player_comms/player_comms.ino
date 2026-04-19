@@ -8,7 +8,7 @@ void setup() {
   // Initialize Transmit Variables
   rxFlag = false;
   receiveData = 0;
-  transmitData = 85;
+  transmitData = 152;
 
   // Initialize Trigger
   trigger_init();

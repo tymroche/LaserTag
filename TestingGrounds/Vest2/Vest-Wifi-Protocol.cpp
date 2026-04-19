@@ -23,8 +23,8 @@ const uint16_t hostPort = 27015;
 WiFiClient hostClient;
 
 //unique to hardware, ESP32 
-String vestDeviceId = "vestA";
-String playerName = "Player 1";
+String vestDeviceId = "vestB";
+String playerName = "Player 2";
 
 //unique to online session
 String assignedPlayerId = "";
