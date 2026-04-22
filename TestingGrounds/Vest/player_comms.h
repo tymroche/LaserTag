@@ -9,7 +9,7 @@
 #define EMITTER_OUT             10                               /** PWM Output to Emitter */
 #define RECEIVER_IN             8                               /** IR Receiver Input */
 #define RECEIVER_IN_2           18                               /** IR Receiver Input 2*/
-#define SPEAKER_OUT             12                              /** PWM Output to Speaker */
+#define SPEAKER_OUT             2                              /** PWM Output to Speaker */
 #define EMITTER_FREQ            38000                           /** Frequency of PWM Output */
 #define PWM_RESOLUTION          8                               /** Resolution for PWM Duty Cycle */
 #define DUTY_CYCLE_50           ((1 <<  PWM_RESOLUTION) / 2)    /** 50% Duty Cycle based on Resolution */
@@ -79,7 +79,7 @@ status_t emitter_write(uint8_t data);
 * @note Interrupt triggered via polled flag.
 * @note Reads in the middle of bit periods.
 */
-status_t receiverRead(volatile uint8_t* buffer);
+status_t receiverRead(volatile uint8_t* buffer, uint8_t pin);
 
 /**
  * @brief initializes speaker
@@ -143,6 +143,7 @@ void printStatus(status_t status);
 
 /** GLOBAL FLAGS */
 extern volatile bool rxFlag;
+extern volatile bool rxFlag2;
 extern uint8_t transmitData;
 extern uint8_t receiveData;
 extern volatile bool triggerFlag;

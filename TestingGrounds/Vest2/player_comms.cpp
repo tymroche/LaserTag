@@ -39,6 +39,7 @@ static inline void receiveTimeOffset() {
 unsigned long lastTrigger = 0;
 // Data Transmission
 volatile bool rxFlag = false;
+volatile bool rxFlag2 = false;
 uint8_t receiveData = 0;
 uint8_t transmitData = 0;
 volatile bool triggerFlag = false;
@@ -63,6 +64,12 @@ void IRAM_ATTR receiver_isr() {
   rxFlag = true;
 }
 
+/**
+* @brief Interrupt Handler for receiver signal. 
+*/
+void IRAM_ATTR receiver_isr_2() {
+  rxFlag2 = true;
+}
 
 /** GENERAL PURPOSE FUNCTIONS */
 status_t emitter_write(uint8_t data) {
@@ -103,7 +110,7 @@ status_t emitter_write(uint8_t data) {
   return STATUS_OK;
 }
 
-status_t receiverRead(volatile uint8_t* buffer) {
+status_t receiverRead(volatile uint8_t* buffer, uint8_t pin) {
   if (buffer == NULL) {
     return INVALID_INPUT;
   }
@@ -118,7 +125,7 @@ status_t receiverRead(volatile uint8_t* buffer) {
   // Reads bits & Stores in buffer
   for (int i = 0; i < 8; i++) {
     receiveDelay();
-    uint8_t currVal = !digitalRead(RECEIVER_IN);
+    uint8_t currVal = !digitalRead(pin);
     *buffer |=  (currVal << i);
     if (currVal) {
       numHighBits ++;
@@ -127,13 +134,13 @@ status_t receiverRead(volatile uint8_t* buffer) {
 
   // Compares Parity Bit
     receiveDelay();    
-    if (!digitalRead(RECEIVER_IN) != (numHighBits % 2)) { // compare parity
+    if (!digitalRead(pin) != (numHighBits % 2)) { // compare parity
       return PARITY_ERROR;
     }
 
   // Checks Stop Bit
   receiveDelay();
-  if (digitalRead(RECEIVER_IN)) {
+  if (digitalRead(pin)) {
     return STOP_ERROR;
   }
 
@@ -157,7 +164,7 @@ void receiver_init() {
   attachInterrupt(RECEIVER_IN, receiver_isr, FALLING);
   
   pinMode(RECEIVER_IN_2, INPUT);
-  attachInterrupt(RECEIVER_IN_2, receiver_isr, FALLING);
+  attachInterrupt(RECEIVER_IN_2, receiver_isr_2, FALLING);
 }
 
 uint8_t playerIdToByte(const String& id) {

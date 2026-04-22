@@ -34,6 +34,7 @@ void setup() {
 
     // Initialize Transmit Variables
   rxFlag = false;
+  rxFlag2 = false;
   receiveData = 0;
   transmitData = 152;
   triggerFlag = false;
@@ -56,6 +57,7 @@ void loop() {
   if (currentTimer <= 0) {
     rxFlag = 0;
     receiveData = 0;
+    rxFlag2 = 0;
   }
   transmitData = playerIdToByte(assignedPlayerId);
   //transmitData = 85;
@@ -70,21 +72,38 @@ void loop() {
         beep(200, 30);
       }
   }
-  if (rxFlag) {
-    
-    status_t status = receiverRead(&receiveData);
-    printStatus(status);
-    Serial.printf("Received receiveData: %d\n", receiveData);
+  if (rxFlag || rxFlag2) {
+    if (rxFlag) {
+      status_t status = receiverRead(&receiveData, RECEIVER_IN);
+      printStatus(status);
+      Serial.printf("Received receiveData: %d\n", receiveData);
 
-    String attackerId = byteToPlayerId(receiveData);
-    if (attackerId.length() > 0 && alive && canShoot && currentTimer > 0) {
-      reportHitToHost(attackerId);
-      playGotHitBeeps();
+      String attackerId = byteToPlayerId(receiveData);
+      if (attackerId.length() > 0 && alive && canShoot && currentTimer > 0) {
+        reportHitToHost(attackerId);
+        playGotHitBeeps();
 
-      if (currentHp < 3 && currentHp != 1) {
-        playLowHealthBeeps();
-      } else if (currentHp == 1) {
-        playDeadBeeps();
+        if (currentHp < 3 && currentHp != 1) {
+          playLowHealthBeeps();
+        } else if (currentHp == 1) {
+          playDeadBeeps();
+        }
+      }
+    } else if (rxFlag2) {
+      status_t status = receiverRead(&receiveData, RECEIVER_IN_2);
+      printStatus(status);
+      Serial.printf("Received receiveData: %d\n", receiveData);
+
+      String attackerId = byteToPlayerId(receiveData);
+      if (attackerId.length() > 0 && alive && canShoot && currentTimer > 0) {
+        reportHitToHost(attackerId);
+        playGotHitBeeps();
+
+        if (currentHp < 3 && currentHp != 1) {
+          playLowHealthBeeps();
+        } else if (currentHp == 1) {
+          playDeadBeeps();
+        }
       }
     }
     rxFlag = 0;

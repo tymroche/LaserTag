@@ -74,15 +74,15 @@ String getQueryValue(String req, String key);
 
 /*
   Convert a player slot number to the assigned IR/player ID.
-  slot 0 x01
-  slot 1 x02
-  slot 2 x03
-  slot 3 x04
+  slot 0 1
+  slot 1 2
+  slot 2 3
+  slot 3 4
 */
 /**
  * @brief Converts player slot index to assigned player ID for IR.
  * @param slot player slot index.
- * @return Player ID (x01-x04) for valid slots, or an empty string for an invalid slot.
+ * @return Player ID (1-4) for valid slots, or an empty string for an invalid slot.
  */
 String slotToPlayerId(int slot);
 
@@ -225,7 +225,7 @@ void registerVest(String vestDeviceId, String name, WiFiClient client);
 
 /*
   Process one hit report.
-  e.g. HIT x02
+  e.g. HIT 2
 */
 
 /**

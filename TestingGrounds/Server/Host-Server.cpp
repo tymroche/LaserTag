@@ -529,12 +529,15 @@ void processHitReport(int targetIndex, String attackerId) {
 void handleDeviceConnections() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active && deviceClients[i] && !deviceClients[i].connected()) {
-      deviceClients[i].stop();
+      String removedName = players[i].name;
+      removePlayer(i);
+      statusMessage = removedName + " disconnected and was removed from the session.";
     }
   }
+
   WiFiClient newClient = deviceServer.available();
 
-  if (newClient) { // new connection message
+  if (newClient) {
     unsigned long start = millis();
     String hello = "";
 
@@ -551,7 +554,7 @@ void handleDeviceConnections() {
       if (start == 2000) break;
     }
 
-    if (hello.startsWith("HELLO ")) { // make new connection in server
+    if (hello.startsWith("HELLO ")) {
       int firstSpace = hello.indexOf(' ', 6);
       if (firstSpace > 0) {
         String vestDeviceId = hello.substring(6, firstSpace);
@@ -566,7 +569,7 @@ void handleDeviceConnections() {
     }
   }
 
-  for (int i = 0; i < MAX_PLAYERS; i++) { //message processing loop
+  for (int i = 0; i < MAX_PLAYERS; i++) {
     if (deviceClients[i] && deviceClients[i].connected() && deviceClients[i].available()) {
       String line = deviceClients[i].readStringUntil('\n');
       line.trim();

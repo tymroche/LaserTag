@@ -196,7 +196,6 @@ void handleHostMessages() {
 bool vestCanFire() {
   return hostClient.connected() && alive && canShoot && currentTimer > 0 && assignedPlayerId.length() > 0;
 }
-}
 
 /*
   Send a hit report to the host.
