@@ -155,6 +155,9 @@ void emitter_init() {
 void receiver_init() {
   pinMode(RECEIVER_IN, INPUT);
   attachInterrupt(RECEIVER_IN, receiver_isr, FALLING);
+  
+  pinMode(RECEIVER_IN_2, INPUT);
+  attachInterrupt(RECEIVER_IN_2, receiver_isr, FALLING);
 }
 
 uint8_t playerIdToByte(const String& id) {
@@ -166,6 +169,97 @@ uint8_t playerIdToByte(const String& id) {
 String byteToPlayerId(uint8_t idvalue) {
   if (idvalue == 0) return "";
   return String (idvalue);
+}
+
+/**
+ * @brief initializes speaker
+ */
+void speaker_init() {
+  Serial.println("speaker_init(): attaching speaker PWM");
+  ledcAttach(SPEAKER_OUT, 2000, PWM_RESOLUTION);
+  ledcWrite(SPEAKER_OUT, 0);
+  Serial.println("speaker_init(): ready");
+}
+
+/**
+ * @brief this function beeps for a frequency and time
+ * @param frequency of beep
+ * @param duration of beep
+ */
+void beep(uint16_t frequency, uint16_t duration) {
+  ledcWrite(SPEAKER_OUT, DUTY_CYCLE_50);
+  ledcWriteTone(SPEAKER_OUT, frequency);
+  delay(duration);
+  ledcWrite(SPEAKER_OUT, 0);
+}
+
+/**
+ * @brief this function plays beeps when connected
+ */
+void playConnectedBeeps() {
+  beep(800, 100); 
+  delay(50);
+  beep(1100, 200);
+}
+/**
+ * @brief this function plays beeps when disconnected
+ */
+void playDisconnectedBeeps() {
+  beep(800, 100);
+  delay(50);
+  beep(400, 200);
+}
+/**
+ * @brief this function plays beeps when firing
+ */
+void playFireBeeps() {
+  beep(1500,50);
+  beep(1400,50);
+}
+/**
+ * @brief this function plays beeps when getting hit
+ */
+void playGotHitBeeps() {
+  beep(1000, 100);
+}
+/**
+ * @brief this function plays beeps when at low health
+ */
+void playLowHealthBeeps() {
+  beep(700, 50);
+  delay(50);
+  beep(700, 50);
+  delay(50);
+  beep(700, 50);
+}
+/**
+ * @brief this function plays beeps when dead
+ */
+void playDeadBeeps() {
+  beep(200, 50);
+  delay(50);
+  beep(200, 50);
+  delay(50);
+  beep(200, 50);
+}
+/**
+ * @brief this function plays beeps when you win
+ */
+void playWinningBeeps() {
+  beep(1200, 70);
+  delay(30);
+  beep(800, 40);
+  delay(20);
+  beep(1400, 100);
+}
+
+/**
+ * @brief this function plays beeps when you lose
+ */
+void playLosingBeeps() {
+  beep(400, 50);
+  delay(50);
+  beep(600, 50);
 }
 
 /** PRINT FUNCTIONS */

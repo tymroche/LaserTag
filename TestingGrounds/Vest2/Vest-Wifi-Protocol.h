@@ -15,6 +15,7 @@
  #define VEST_WIFI_PROTOCOL
 
  #include <WiFi.h>
+ #include <player_comms.h>
 
 extern const char* hostSsid;
 extern const char* hostPassword;

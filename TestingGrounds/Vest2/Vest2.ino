@@ -19,7 +19,9 @@
 void setup() {
   Serial.begin(115200);
 
-
+  speaker_init();
+  delay(1000);
+  beep(500, 200);
   WiFi.mode(WIFI_STA);
   WiFi.begin(hostSsid, hostPassword);
   Serial.println(hostSsid);
@@ -51,14 +53,21 @@ void setup() {
 void loop() {
   connectVestToHost();
   handleHostMessages();
+  if (currentTimer <= 0) {
+    rxFlag = 0;
+    receiveData = 0;
+  }
   transmitData = playerIdToByte(assignedPlayerId);
   //transmitData = 85;
   if (triggerFlag) {
     triggerFlag = false;
-
+    playFireBeeps();
     if (vestCanFire()) {
       emitter_write(transmitData);
       Serial.println("Shot fired");
+      } else {
+        beep(600, 50);
+        beep(200, 30);
       }
   }
   if (rxFlag) {
@@ -68,8 +77,15 @@ void loop() {
     Serial.printf("Received receiveData: %d\n", receiveData);
 
     String attackerId = byteToPlayerId(receiveData);
-    if (attackerId.length() > 0) {
+    if (attackerId.length() > 0 && alive && canShoot && currentTimer > 0) {
       reportHitToHost(attackerId);
+      playGotHitBeeps();
+
+      if (currentHp < 3 && currentHp != 1) {
+        playLowHealthBeeps();
+      } else if (currentHp == 1) {
+        playDeadBeeps();
+      }
     }
     rxFlag = 0;
   }

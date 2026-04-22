@@ -24,7 +24,7 @@ WiFiClient hostClient;
 
 //unique to hardware, ESP32 
 String vestDeviceId = "vestA";
-String playerName = "Player 1";
+String playerName = "Alfonso";
 
 //unique to online session
 String assignedPlayerId = "";
@@ -77,6 +77,7 @@ void connectVestToHost() {
       if (hostClient.connect(hostIP, hostPort)) {
         Serial.println("TCP connected, sending HELLO once");
         hostClient.println("HELLO " + vestDeviceId + " " + playerName);
+        playConnectedBeeps();
       } else {
         Serial.println("TCP connection failed");
       }
@@ -193,7 +194,8 @@ void handleHostMessages() {
  * @return true if so, false otherwise.
  */
 bool vestCanFire() {
-  return hostClient.connected() && alive && canShoot && assignedPlayerId.length() > 0;
+  return hostClient.connected() && alive && canShoot && currentTimer > 0 && assignedPlayerId.length() > 0;
+}
 }
 
 /*
