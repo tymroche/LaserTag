@@ -77,7 +77,7 @@ String getQueryValue(String req, String key) {
 }
 
 String slotToPlayerId(int8_t slot) {
-  if (slot >= MAX_PLAYERS) return "";
+  if (slot < 0 || slot >= MAX_PLAYERS) return "";
   return String(slot + 1);
 }
 
@@ -358,13 +358,13 @@ void buildRankings() {
     }
   } // build array
 
-  for (uint8_t i = 0; i < rankedCount - 1; i++) {
-    for (uint8_t j = 0; j < rankedCount - 1 - i; j++) {
-      uint8_t left = rankedPlayers[j];
-      uint8_t right = rankedPlayers[j + 1];
+  for (int8_t i = 0; i < rankedCount - 1; i++) {
+    for (int8_t j = 0; j < rankedCount - 1 - i; j++) {
+      int8_t left = rankedPlayers[j];
+      int8_t right = rankedPlayers[j + 1];
 
       if (!ranksHigher(left, right)) {
-        uint8_t temp = rankedPlayers[j];
+        int8_t temp = rankedPlayers[j];
         rankedPlayers[j] = rankedPlayers[j + 1];
         rankedPlayers[j + 1] = temp;
       } 
@@ -535,13 +535,13 @@ String readHelloLine(WiFiClient& client) {
   //this waits to receive HELLO from client and continues otherwise
   while (client.connected() && millis() - start < 1000) {
     while (client.available()) {
-      char c = client.read();
-      if (c == '\n') {
+      char ch = client.read();
+      if (ch == '\n') {
         hello.trim();
         return hello;
       }
-      if (c != '\r') {
-        hello += c;
+      if (ch != '\r') {
+        hello += ch;
       }
     }
   }

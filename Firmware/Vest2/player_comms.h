@@ -9,7 +9,6 @@
 #define EMITTER_OUT             10                               /** PWM Output to Emitter */
 #define RECEIVER_IN             8                               /** IR Receiver Input */
 #define RECEIVER_IN_2           18                               /** IR Receiver Input 2*/
-#define SPEAKER_OUT             2                              /** PWM Output to Speaker */
 #define EMITTER_FREQ            38000                           /** Frequency of PWM Output */
 #define PWM_RESOLUTION          8                               /** Resolution for PWM Duty Cycle */
 #define DUTY_CYCLE_50           ((1 <<  PWM_RESOLUTION) / 2)    /** 50% Duty Cycle based on Resolution */
@@ -80,58 +79,6 @@ status_t emitter_write(uint8_t data);
 * @note Reads in the middle of bit periods.
 */
 status_t receiverRead(volatile uint8_t* buffer, uint8_t pin);
-
-/**
- * @brief initializes speaker
- */
-void speaker_init();
-
-/**
- * @brief this function beeps for a frequency and time
- * @param frequency of beep
- * @param duration of beep
- */
-void beep(uint16_t frequency, uint16_t duration);
-
-/**
- * @brief this function plays beeps when connected
- */
-void playConnectedBeeps();
-
-/**
- * @brief this function plays beeps when disconnected
- */
-void playDisconnectedBeeps();
-
-/**
- * @brief this function plays beeps when firing
- */
-void playFireBeeps();
-
-/**
- * @brief this function plays beeps when getting hit
- */
-void playGotHitBeeps();
-
-/**
- * @brief this function plays beeps when at low health
- */
-void playLowHealthBeeps();
-
-/**
- * @brief this function plays beeps when dead
- */
-void playDeadBeeps();
-
-/**
- * @brief this function plays beeps when you win
- */
-void playWinningBeeps();
-
-/**
- * @brief this function plays beeps when you lose
- */
-void playLosingBeeps();
 
 
 /** PRINT FUNCTIONS */

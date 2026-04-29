@@ -8,14 +8,12 @@
  *
  * This file defines all variables, structs, and functions necessary for Laser Tag Game.
  * 
- * @see config.h for the hardware definitions like GPIO mapping
  */
 
  #ifndef VEST_WIFI_PROTOCOL
  #define VEST_WIFI_PROTOCOL
 
  #include <WiFi.h>
- #include <player_comms.h>
 
 extern const char* hostSsid;
 extern const char* hostPassword;
@@ -35,16 +33,17 @@ extern String assignedPlayerId;
 extern bool canShoot;
 extern bool alive;
 extern String currentMode;
-extern int currentHp;
-extern int currentScore;
-extern int currentTimer;
+extern uint8_t currentHp;
+extern int16_t currentScore;
+extern uint16_t currentTimer;
 
 extern unsigned long lastReconnectAttempt;
 
 /**
  * @brief Connects vest to host SoftAP and opens persistent TCP connection to host device server.
+ * @return true or false is used to determine whether the connection is new and requires sound or no.
  */
-void connectVestToHost();
+bool connectVestToHost();
 
 /*
   Parse one STATE line sent from the host.

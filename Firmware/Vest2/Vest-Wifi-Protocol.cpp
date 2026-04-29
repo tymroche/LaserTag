@@ -8,7 +8,6 @@
  *
  * This file defines all variables, structs, and functions necessary for Laser Tag Game.
  * 
- * @see config.h for the hardware definitions like GPIO mapping
  */
 
 #include <WiFi.h>
@@ -33,26 +32,23 @@ bool canShoot = true;
 bool alive = true;
 bool sessionRegistered = false;
 String currentMode = "Free For All";
-int currentHp = 5;
-int currentScore = 0;
-int currentTimer = 90;
+uint8_t currentHp = 5;
+int16_t currentScore = 0;
+uint16_t currentTimer = 90;
 
 unsigned long lastReconnectAttempt = 0;
 
-/**
- * @brief Connects vest to host SoftAP and opens persistent TCP connection to host device server.
- */
-void connectVestToHost() {
+bool connectVestToHost() {
   static unsigned long lastStatusPrint = 0;
-  wl_status_t s = WiFi.status();
+  wl_status_t wifiStatus = WiFi.status();
 
-  if (s != WL_CONNECTED) {
+  if (wifiStatus != WL_CONNECTED) {
     sessionRegistered = false;
 
     if (millis() - lastStatusPrint >= 2000) {
       lastStatusPrint = millis();
       Serial.print("WiFi status: ");
-      Serial.println((int)s);
+      Serial.println((int) wifiStatus);
     }
 
     if (millis() - lastReconnectAttempt >= 10000) {
@@ -62,7 +58,7 @@ void connectVestToHost() {
       delay(500);
       WiFi.begin(hostSsid, hostPassword);
     }
-    return;
+    return false; //no connection
   }
 
   if (!hostClient.connected()) {
@@ -77,15 +73,15 @@ void connectVestToHost() {
       if (hostClient.connect(hostIP, hostPort)) {
         Serial.println("TCP connected, sending HELLO once");
         hostClient.println("HELLO " + vestDeviceId + " " + playerName);
-        playConnectedBeeps();
+        return true; //new HELLO means new sound
       } else {
         Serial.println("TCP connection failed");
       }
     }
-    return;
+    return false; //no connection
   }
 
-  // already connected, do not keep re-registering
+  return false; // already connected, do not keep re-registering
 }
 /*
   Parse one STATE line sent from the host.

@@ -12,6 +12,7 @@
 #include <WiFi.h>
 #include "Vest-Wifi-Protocol.h"
 #include "player_comms.h"
+#include "speaker.h"
 
 /**
  * @brief setup vest
@@ -21,7 +22,7 @@ void setup() {
 
   speaker_init();
   delay(1000);
-  beep(500, 200);
+  playStartUpBeeps();
   WiFi.mode(WIFI_STA);
   WiFi.begin(hostSsid, hostPassword);
   Serial.println(hostSsid);
@@ -53,10 +54,12 @@ void setup() {
  * @brief main super loop
  */
 void loop() {
-  static int previousHp = currentHp;
+  static uint8_t previousHp = currentHp;
   static bool previousAlive = alive;
 
-  connectVestToHost();
+  if (connectVestToHost()) {
+    playConnectedBeeps();
+  }
   handleHostMessages();
 
   // Only play damage/death sounds when state changes
@@ -73,7 +76,7 @@ void loop() {
   previousHp = currentHp;
   previousAlive = alive;
 
-  if (currentTimer <= 0) {
+  if (currentTimer == 0) {
     rxFlag = false;
     rxFlag2 = false;
     receiveData = 0;
@@ -89,8 +92,7 @@ void loop() {
       playFireBeeps();
       Serial.println("Shot fired");
     } else {
-      beep(600, 50);
-      beep(200, 30);
+      playCantFireBeeps();
     }
   }
 
