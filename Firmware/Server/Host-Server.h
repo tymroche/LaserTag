@@ -15,12 +15,15 @@
 #define HOST_SERVER_H
 
 #include <WiFi.h>
+#define MAX_PLAYERS 4 //not a hard max, just defined for our demo functionality
+
+
+//global variables start
 
 extern String header;
 extern String gameMode;
 extern String statusMessage;
 
-extern const int MAX_PLAYERS;
 extern const int STARTING_HP;
 extern const int STARTING_FFA_POINTS;
 extern const int FFA_HIT_GAIN;
@@ -55,7 +58,13 @@ extern int rankedCount;
 
 extern int ffaDurationSeconds;
 extern bool ffaTimerRunning;
+extern bool duelsGameRunning;
+extern bool roundOver;
+extern String roundOverMessage;
 extern unsigned long ffaStartMillis;
+
+
+//global variables end
 
 /**
  * @brief Decodes URL characters from browser request.
@@ -74,15 +83,15 @@ String getQueryValue(String req, String key);
 
 /*
   Convert a player slot number to the assigned IR/player ID.
-  slot 0 x01
-  slot 1 x02
-  slot 2 x03
-  slot 3 x04
+  slot 0 1
+  slot 1 2
+  slot 2 3
+  slot 3 4
 */
 /**
  * @brief Converts player slot index to assigned player ID for IR.
  * @param slot player slot index.
- * @return Player ID (x01-x04) for valid slots, or an empty string for an invalid slot.
+ * @return Player ID (1-4) for valid slots, or an empty string for an invalid slot.
  */
 String slotToPlayerId(int slot);
 
@@ -151,16 +160,6 @@ void sendStateToPlayer(int index);
  */
 void sendStateToAllPlayers();
 
-
-/*
-  TEST FUNCTION FOR PLAYER SLOT VALIDITY; REMOVE WHEN DONE HERE AND IN HTML UI
-*/
-/**
- * @brief Adds a browser-only player to the lobby if a name is valid and a slot is available.
- * @param name Display name to assign to the new browser-only player.
- */
-void addBrowserPlayer(String name);
-
 /**
  * @brief Removes one player from the lobby and disconnects any linked vest client.
  * @param index Player slot index to remove.
@@ -210,6 +209,16 @@ void stopFFATimer();
 void resetFFATimer();
 
 /**
+ * @brief Starts Duels game and broadcasts updated state.
+ */
+void startDuelsGame();
+
+/**
+ * @brief Stops Duels game and broadcasts updated state.
+ */
+void stopDuelsGame();
+
+/**
  * @brief Changes current game mode and resets all active players.
  * @param newMode New game mode string to apply.
  */
@@ -225,7 +234,7 @@ void registerVest(String vestDeviceId, String name, WiFiClient client);
 
 /*
   Process one hit report.
-  e.g. HIT x02
+  e.g. HIT 2
 */
 
 /**
@@ -269,5 +278,75 @@ void serveWebPage(WiFiClient& client);
  * @brief Accepts browser connections, parses requests, and serves html page.
  */
 void handleWebClients();
+
+/**
+ * @brief Clears the current round-over state and winner message.
+ */
+void clearRoundOverState();
+
+/**
+ * @brief Checks whether the current round has ended and updates round-over state.
+ * @return true if the round is over, otherwise false.
+ */
+bool isRoundOver();
+
+/**
+ * @brief Returns true when the current mode is actively running.
+ * @return true if the current mode is in an active round; otherwise false.
+ */
+bool isGameRunning();
+
+/**
+ * @brief Returns the timer value that should be sent to vest clients.
+ * @return Remaining FFA time during Free For All, 1 during active Duels, otherwise 0.
+ */
+int getTimerValueForState();
+
+/**
+ * @brief Applies current mode state to one player's alive/canShoot fields.
+ * @param index Player slot index to update.
+ */
+void syncPlayerRoundState(int index);
+
+/**
+ * @brief Applies current mode state to all active players.
+ */
+void syncAllPlayersRoundState();
+
+/**
+ * @brief Builds the STATE line sent to one vest client.
+ * @param index Player slot index whose state is being serialized.
+ * @return Complete STATE message line.
+ */
+String buildStateMessage(int index);
+
+/**
+ * @brief Reads the HELLO line from a newly connected vest.
+ * @param client Newly connected TCP client.
+ * @return Parsed HELLO line, or an empty string on timeout/failure.
+ */
+String readHelloLine(WiFiClient& client);
+
+/**
+ * @brief Handles one new vest connection if available.
+ */
+void handleNewDeviceConnection();
+
+/**
+ * @brief Handles incoming messages from already connected vest clients.
+ */
+void handleExistingDeviceMessages();
+
+/**
+ * @brief Removes vest clients that have disconnected from the host.
+ */
+void cleanupDisconnectedClients();
+
+/**
+ * @brief Returns whether a browser request should be redirected after action processing.
+ * @param requestLine First line of the HTTP request.
+ * @return true if the request mutates state and should redirect; otherwise false.
+ */
+bool isActionRequest(String requestLine);
 
 #endif
