@@ -32,12 +32,13 @@ void setup() {
   Serial.print("Trying to join SSID: ");
   Serial.println(hostSsid);
 
-    // Initialize Transmit Variables
+  // Initialize Transmit Variables
   rxFlag = false;
   rxFlag2 = false;
   receiveData = 0;
   transmitData = 152;
   triggerFlag = false;
+
   // Initialize Trigger
   trigger_init();
 
@@ -52,60 +53,84 @@ void setup() {
  * @brief main super loop
  */
 void loop() {
+  static int previousHp = currentHp;
+  static bool previousAlive = alive;
+
   connectVestToHost();
   handleHostMessages();
-  if (currentTimer <= 0) {
-    rxFlag = 0;
-    receiveData = 0;
-    rxFlag2 = 0;
+
+  // Only play damage/death sounds when state changes
+  if (currentHp < previousHp) {
+    playGotHitBeeps();
+
+    if (currentHp == 0 && previousAlive) {
+      playDeadBeeps();
+    } else if (currentHp > 0 && currentHp < 3) {
+      playLowHealthBeeps();
+    }
   }
+
+  previousHp = currentHp;
+  previousAlive = alive;
+
+  if (currentTimer <= 0) {
+    rxFlag = false;
+    rxFlag2 = false;
+    receiveData = 0;
+  }
+
   transmitData = playerIdToByte(assignedPlayerId);
-  //transmitData = 85;
+
   if (triggerFlag) {
     triggerFlag = false;
-    playFireBeeps();
+
     if (vestCanFire()) {
       emitter_write(transmitData);
+      playFireBeeps();
       Serial.println("Shot fired");
-      } else {
-        beep(600, 50);
-        beep(200, 30);
-      }
+    } else {
+      beep(600, 50);
+      beep(200, 30);
+    }
   }
-  if (rxFlag || rxFlag2) {
-    if (rxFlag) {
-      status_t status = receiverRead(&receiveData, RECEIVER_IN);
-      printStatus(status);
-      Serial.printf("Received receiveData: %d\n", receiveData);
 
+  if (rxFlag) {
+    rxFlag = false;
+
+    status_t status = receiverRead(&receiveData, RECEIVER_IN);
+    printStatus(status);
+    Serial.printf("Received receiveData on RECEIVER_IN: %d\n", receiveData);
+
+    if (status == STATUS_OK) {
       String attackerId = byteToPlayerId(receiveData);
-      if (attackerId.length() > 0 && alive && canShoot && currentTimer > 0) {
+
+      if (attackerId.length() > 0 &&
+          attackerId != assignedPlayerId &&
+          alive &&
+          canShoot &&
+          currentTimer > 0) {
         reportHitToHost(attackerId);
-        playGotHitBeeps();
-
-        if (currentHp < 3 && currentHp != 1) {
-          playLowHealthBeeps();
-        } else if (currentHp == 1) {
-          playDeadBeeps();
-        }
-      }
-    } else if (rxFlag2) {
-      status_t status = receiverRead(&receiveData, RECEIVER_IN_2);
-      printStatus(status);
-      Serial.printf("Received receiveData: %d\n", receiveData);
-
-      String attackerId = byteToPlayerId(receiveData);
-      if (attackerId.length() > 0 && alive && canShoot && currentTimer > 0) {
-        reportHitToHost(attackerId);
-        playGotHitBeeps();
-
-        if (currentHp < 3 && currentHp != 1) {
-          playLowHealthBeeps();
-        } else if (currentHp == 1) {
-          playDeadBeeps();
-        }
       }
     }
-    rxFlag = 0;
+  }
+
+  if (rxFlag2) {
+    rxFlag2 = false;
+
+    status_t status = receiverRead(&receiveData, RECEIVER_IN_2);
+    printStatus(status);
+    Serial.printf("Received receiveData on RECEIVER_IN_2: %d\n", receiveData);
+
+    if (status == STATUS_OK) {
+      String attackerId = byteToPlayerId(receiveData);
+
+      if (attackerId.length() > 0 &&
+          attackerId != assignedPlayerId &&
+          alive &&
+          canShoot &&
+          currentTimer > 0) {
+        reportHitToHost(attackerId);
+      }
+    }
   }
 }
