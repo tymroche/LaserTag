@@ -43,11 +43,6 @@ bool roundOver = false;
 String roundOverMessage = "";
 unsigned long ffaStartMillis = 0;
 
-/**
- * @brief Decodes URL characters from browser request.
- * @param s URL-encoded string to decode.
- * @return Decoded, trimmed string.
- */
 String decodeUrl(String s) {
   s.replace("%20", " ");
   s.replace("+", " ");
@@ -63,12 +58,6 @@ String decodeUrl(String s) {
   return s;
 }
 
-/**
- * @brief Extracts query parameter from HTTP GET request.
- * @param req HTTP request string.
- * @param key Query parameter to extract.
- * @return Decoded value of the requested parameter.
- */
 String getQueryValue(String req, String key) {
   //GET /submit?name=Alfonso%20Landaverde&mode=ffa HTTP/1.1
   int start = req.indexOf(key + "="); //name=
@@ -87,36 +76,11 @@ String getQueryValue(String req, String key) {
   return decodeUrl(req.substring(start, end)); //return parsed value
 }
 
-
-/**
- * @brief Converts player slot index to assigned player ID for IR.
- * @param slot player slot index.
- * @return Player ID for valid slots, or an empty string for an invalid slot.
- */
 String slotToPlayerId(int slot) {
   if (slot < 0 || slot >= MAX_PLAYERS) return "";
   return String(slot + 1);
 }
 
-/**
- * @brief Find a player slot by displayed name.
- * @param name Player name to search for.
- * @return Matching player slot index or -1.
- */
-int findPlayerByName(String name) {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
-    if (players[i].active && players[i].name == name) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-/**
- * @brief Find a player slot by vest ID.
- * @param vestDeviceId Vest ID.
- * @return Matching player slot or -1.
- */
 int findPlayerByVestDeviceId(String vestDeviceId) {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active && players[i].vestDeviceId == vestDeviceId) {
@@ -126,11 +90,6 @@ int findPlayerByVestDeviceId(String vestDeviceId) {
   return -1;
 }
 
-/**
- * @brief Find a player slot by assigned game player ID.
- * @param playerId Assigned player ID.
- * @return Matching player slot index or -1.
- */
 int findPlayerByAssignedPlayerId(String playerId) {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active && players[i].playerId == playerId) {
@@ -140,10 +99,7 @@ int findPlayerByAssignedPlayerId(String playerId) {
   return -1;
 }
 
-/**
- * @brief Finds the first unused player slot.
- * @return Index of the first free player slot, or -1 if the lobby is full.
- */
+
 int findOpenSlot() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (!players[i].active) return i;
@@ -151,10 +107,7 @@ int findOpenSlot() {
   return -1;
 }
 
-/**
- * @brief Resets one player's stats for the current mode.
- * @param index Player slot index to reset.
- */
+
 void resetPlayerForCurrentMode(int index) {
   players[index].hp = STARTING_HP;
   players[index].score = STARTING_FFA_POINTS;
@@ -162,9 +115,7 @@ void resetPlayerForCurrentMode(int index) {
   players[index].canShoot = false;
 }
 
-/**
- * @brief Resets all player records and closes any client connections.
- */
+
 void resetAllPlayers() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     players[i].name = "";
@@ -184,29 +135,24 @@ void resetAllPlayers() {
 }
 
 /*UNDER CONSTRUCTION, WOULD LIKE TO HAVE TIMER ACTIVELY DISPLAY TIME*/
-/**
- * @brief Computes the time remaining for Free For All timer.
- * @return Remaining timer value in seconds, or zero once the timer has expired.
- */
+
 int getRemainingFFATime() {
+  //ffa round not started
   if (!ffaTimerRunning) return ffaDurationSeconds;
 
   int elapsed = (millis() - ffaStartMillis) / 1000;
   int remaining = ffaDurationSeconds - elapsed;
 
   if (remaining <= 0) {
+    //ffa round ended
     ffaTimerRunning = false;
     return 0;
   }
-
+  //ffa round running
   return remaining;
 }
 
-/**
- * @brief Formats seconds as minutes:seconds.
- * @param totalSeconds Total seconds.
- * @return Formatted string in M:SS form.
- */
+
 String formatTime(int totalSeconds) {
   int minutes = totalSeconds / 60;
   int seconds = totalSeconds % 60;
@@ -217,20 +163,16 @@ String formatTime(int totalSeconds) {
   return out;
 }
 
-/**
- * @brief Clears the current round-over state and winner message.
- */
+
 void clearRoundOverState() {
   roundOver = false;
   roundOverMessage = "";
 }
 
-/**
- * @brief Checks whether the current round has ended and updates round-over state.
- * @return true if the round is over, otherwise false.
- */
+
 bool isRoundOver() {
   if (gameMode == "Free For All") {
+    //
     if (!ffaTimerRunning && getRemainingFFATime() == 0) {
       int bestIndex = -1;
       bool tie = false;
@@ -272,7 +214,7 @@ bool isRoundOver() {
       aliveCount++;
       winnerIndex = i;
     }
-
+    // 1 player will win, or no players won (the last x players died at the same time)
     if (aliveCount <= 1) {
       duelsGameRunning = false;
       roundOver = true;
@@ -291,10 +233,7 @@ bool isRoundOver() {
   return roundOver;
 }
 
-/**
- * @brief Returns true when the current mode is actively running.
- * @return true if the current mode is in an active round; otherwise false.
- */
+
 bool isGameRunning() {
   if (gameMode == "Free For All") {
     return ffaTimerRunning && getRemainingFFATime() > 0;
@@ -305,50 +244,39 @@ bool isGameRunning() {
   return false;
 }
 
-/**
- * @brief Returns the timer value that should be sent to vest clients.
- * @return Remaining FFA time during Free For All, 1 during active Duels, otherwise 0.
- */
+
 int getTimerValueForState() {
   if (gameMode == "Free For All") {
     return getRemainingFFATime();
   }
   if (gameMode == "Duels") {
+    //timer is a flag in duels
     return duelsGameRunning ? 1 : 0;
   }
   return 0;
 }
 
-/**
- * @brief Applies current mode state to one player's alive/canShoot fields.
- * @param index Player slot index to update.
- */
+
 void syncPlayerRoundState(int index) {
   if (index < 0 || index >= MAX_PLAYERS) return;
   if (!players[index].active) return;
 
-  if (!players[index].alive) {
+  if (!players[index].alive) { //dead players cannot fire
     players[index].canShoot = false;
     return;
   }
 
-  players[index].canShoot = isGameRunning();
+  players[index].canShoot = isGameRunning(); //alive players can only shoot during the round
 }
 
-/**
- * @brief Applies current mode state to all active players.
- */
+
 void syncAllPlayersRoundState() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     syncPlayerRoundState(i);
   }
 }
 
-/**
- * @brief Builds the STATE line sent to one vest client.
- * @param index Player slot index whose state is being serialized.
- * @return Complete STATE message line.
- */
+
 String buildStateMessage(int index) {
   String msg = "STATE ";
   msg += "PLAYERID=" + players[index].playerId;
@@ -361,11 +289,7 @@ String buildStateMessage(int index) {
   return msg;
 }
 
-/**
- * @brief Send the current host state to one vest.
- * Includes the assigned PLAYERID that the vest should use in IR transmit.
- * @param index Player slot whose vest should receive the state update.
- */
+
 void sendStateToPlayer(int index) {
   if (index < 0 || index >= MAX_PLAYERS) return;
   if (!players[index].active) return;
@@ -375,9 +299,7 @@ void sendStateToPlayer(int index) {
   deviceClients[index].println(buildStateMessage(index));
 }
 
-/**
- * @brief Sends game state to every player slot.
- */
+
 void sendStateToAllPlayers() {
   syncAllPlayersRoundState();
   for (int i = 0; i < MAX_PLAYERS; i++) {
@@ -385,10 +307,7 @@ void sendStateToAllPlayers() {
   }
 }
 
-/**
- * @brief Removes one player from the lobby and disconnects any linked vest client.
- * @param index Player slot index to remove.
- */
+
 void removePlayer(int index) {
   if (index < 0 || index >= MAX_PLAYERS) return;
   if (!players[index].active) return;
@@ -412,9 +331,7 @@ void removePlayer(int index) {
   statusMessage = removedName + " was removed.";
 }
 
-/**
- * @brief Removes all player from lobby.
- */
+
 void removeAllPlayers() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active) {
@@ -425,12 +342,7 @@ void removeAllPlayers() {
   statusMessage = "All players removed.";
 }
 
-/**
- * @brief Compares two active player slots to determine scoreboard ordering.
- * @param a First player slot index to compare.
- * @param b Second player slot index to compare.
- * @return true if player a should rank above player b; otherwise false.
- */
+
 bool ranksHigher(int a, int b) {
   if (gameMode == "Duels") {
     if (players[a].hp != players[b].hp) return players[a].hp > players[b].hp;
@@ -441,9 +353,7 @@ bool ranksHigher(int a, int b) {
   return players[a].name < players[b].name;
 }
 
-/**
- * @brief Builds sorted player list used by scoreboard.
- */
+
 void buildRankings() {
   rankedCount = 0;
 
@@ -467,25 +377,10 @@ void buildRankings() {
   } //compares all players
 }
 
-/**
- * @brief Disables shooting for all active players and sends updated state.
- */
-void disableAllShooting() {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
-    if (players[i].active) {
-      players[i].canShoot = false;
-    }
-  }
-  sendStateToAllPlayers();
-}
-
 /*
   Start, stop, reset FFA timer.
 */
 
-/**
- * @brief Starts Free For All timer and broadcasts updated state.
- */
 void startFFATimer() {
   ffaTimerRunning = true;
   duelsGameRunning = false;
@@ -495,18 +390,14 @@ void startFFATimer() {
   sendStateToAllPlayers();
 }
 
-/**
- * @brief Stops Free For All timer and broadcasts updated state.
- */
+
 void stopFFATimer() {
   ffaTimerRunning = false;
   statusMessage = "Free For All timer stopped.";
   sendStateToAllPlayers();
 }
 
-/**
- * @brief Resets the Free For All timer state and broadcasts updated state.
- */
+
 void resetFFATimer() {
   ffaTimerRunning = false;
   clearRoundOverState();
@@ -514,9 +405,7 @@ void resetFFATimer() {
   sendStateToAllPlayers();
 }
 
-/**
- * @brief Starts Duels game and broadcasts updated state.
- */
+
 void startDuelsGame() {
   duelsGameRunning = true;
   ffaTimerRunning = false;
@@ -525,19 +414,14 @@ void startDuelsGame() {
   sendStateToAllPlayers();
 }
 
-/**
- * @brief Stops Duels game and broadcasts updated state.
- */
+
 void stopDuelsGame() {
   duelsGameRunning = false;
   statusMessage = "Duels game stopped.";
   sendStateToAllPlayers();
 }
 
-/**
- * @brief Changes current game mode and resets all active players.
- * @param newMode New game mode string to apply.
- */
+
 void setGameMode(String newMode) {
   gameMode = newMode;
   ffaTimerRunning = false;
@@ -554,12 +438,7 @@ void setGameMode(String newMode) {
   sendStateToAllPlayers();
 }
 
-/**
- * @brief Registers a newly connected vest or reconnects an existing vest to a player slot.
- * @param vestDeviceId Unique device identifier reported by the vest.
- * @param name Player name associated with the vest.
- * @param client Connected TCP client for that vest.
- */
+
 void registerVest(String vestDeviceId, String name, WiFiClient client) {
   if (vestDeviceId.length() == 0 || name.length() == 0) {
     client.stop();
@@ -568,6 +447,7 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
 
   int existingVest = findPlayerByVestDeviceId(vestDeviceId);
   if (existingVest >= 0) {
+    //existingVest reconnected, so only replace connection, not add new player
     if (deviceClients[existingVest]) {
       deviceClients[existingVest].stop();
     }
@@ -601,21 +481,12 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
   sendStateToPlayer(slot);
 }
 
-
-/*
-  Process one hit report.
-  e.g. HIT 2
-*/
-
-/**
- * @brief Processes a hit report sent by a vest and applies the appropriate scoring or HP changes.
- * @param targetIndex Player slot index of the vest that reported being hit.
- * @param attackerId Assigned player ID of the attacker IR.
- */
 void processHitReport(int targetIndex, String attackerId) {
   int attackerIndex = findPlayerByAssignedPlayerId(attackerId);
 
+  //if not a player
   if (targetIndex < 0 || targetIndex >= MAX_PLAYERS) return;
+  // 
   if (attackerIndex < 0 || attackerIndex >= MAX_PLAYERS) return;
   if (!players[targetIndex].active || !players[attackerIndex].active) return;
   if (attackerIndex == targetIndex) return;
@@ -659,18 +530,6 @@ void processHitReport(int targetIndex, String attackerId) {
   }
 }
 
-
-/*
-  Accept new vest connections and process vest messages.
-    HELLO <vestDeviceId> <playerName>
-    HIT <attackerPlayerId>
-*/
-
-/**
- * @brief Reads the HELLO line from a newly connected vest.
- * @param client Newly connected TCP client.
- * @return Parsed HELLO line, or an empty string on timeout/failure.
- */
 String readHelloLine(WiFiClient& client) {
   unsigned long start = millis();
   String hello = "";
@@ -691,9 +550,7 @@ String readHelloLine(WiFiClient& client) {
   return "";
 }
 
-/**
- * @brief Removes vest clients that have disconnected from the host.
- */
+
 void cleanupDisconnectedClients() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active && deviceClients[i] && !deviceClients[i].connected()) {
@@ -704,9 +561,7 @@ void cleanupDisconnectedClients() {
   }
 }
 
-/**
- * @brief Handles one new vest connection if available.
- */
+
 void handleNewDeviceConnection() {
   WiFiClient newClient = deviceServer.available();
   if (!newClient) return;
@@ -729,9 +584,7 @@ void handleNewDeviceConnection() {
   registerVest(vestDeviceId, name, newClient);
 }
 
-/**
- * @brief Handles incoming messages from already connected vest clients.
- */
+
 void handleExistingDeviceMessages() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (deviceClients[i] && deviceClients[i].connected() && deviceClients[i].available()) {
@@ -747,9 +600,7 @@ void handleExistingDeviceMessages() {
   }
 }
 
-/**
- * @brief Accepts new vest TCP connections and processes messages from connected vests.
- */
+
 void handleDeviceConnections() {
   cleanupDisconnectedClients();
 
@@ -762,10 +613,7 @@ void handleDeviceConnections() {
   handleExistingDeviceMessages();
 }
 
-/**
- * @brief Processes a browser request.
- * @param req HTTP request string to inspect for actions.
- */
+
 void handleBrowserAction(String req) {
   if (req.indexOf("GET /mode/ffa") >= 0) {
     setGameMode("Free For All");
@@ -804,11 +652,7 @@ void handleBrowserAction(String req) {
   }
 }
 
-/**
- * @brief Sends an HTTP redirect response back to the browser homepage.
- * clears url as well to prevent duplicate actions.
- * @param client Connected web client to respond to.
- */
+
 void redirectToHome(WiFiClient& client) {
   client.println("HTTP/1.1 303 See Other");
   client.println("Location: /");
@@ -819,11 +663,6 @@ void redirectToHome(WiFiClient& client) {
   client.println();
 }
 
-
-/**
- * @brief Generates and sends the current control page and scoreboard HTML to a browser client.
- * @param client Connected web client to respond to.
- */
 void serveWebPage(WiFiClient& client) {
   buildRankings();
 
@@ -966,11 +805,6 @@ void serveWebPage(WiFiClient& client) {
   client.println();
 }
 
-/**
- * @brief Returns whether a browser request should be redirected after action processing.
- * @param requestLine First line of the HTTP request.
- * @return true if the request mutates state and should redirect; otherwise false.
- */
 bool isActionRequest(String requestLine) {
   return
     requestLine.indexOf("GET /mode/ffa") >= 0 ||
@@ -984,9 +818,6 @@ bool isActionRequest(String requestLine) {
     requestLine.indexOf("GET /timer/reset") >= 0;
 }
 
-/**
- * @brief Accepts browser connections, parses requests, and serves html page.
- */
 void handleWebClients() {
   WiFiClient client = webServer.available();
   if (!client) return;

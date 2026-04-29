@@ -96,13 +96,6 @@ String getQueryValue(String req, String key);
 String slotToPlayerId(int slot);
 
 /**
- * @brief Find a player slot by displayed name.
- * @param name Player name to search for.
- * @return Matching player slot index or -1.
- */
-int findPlayerByName(String name);
-
-/**
  * @brief Find a player slot by vest ID.
  * @param vestDeviceId Vest ID.
  * @return Matching player slot or -1.
@@ -184,11 +177,6 @@ bool ranksHigher(int a, int b);
  */
 void buildRankings();
 
-/**
- * @brief Disables shooting for all active players and sends updated state.
- */
-void disableAllShooting();
-
 /*
   Start, stop, reset FFA timer.
 */
@@ -232,26 +220,19 @@ void setGameMode(String newMode);
  */
 void registerVest(String vestDeviceId, String name, WiFiClient client);
 
-/*
-  Process one hit report.
-  e.g. HIT 2
-*/
-
 /**
  * @brief Processes a hit report sent by a vest and applies the appropriate scoring or HP changes.
  * @param targetIndex Player slot index of the vest that reported being hit.
  * @param attackerId Assigned player ID of the attacker IR.
+ * @note Process one hit report. e.g. HIT 2
  */
 void processHitReport(int targetIndex, String attackerId);
 
-/*
-  Accept new vest connections and process vest messages.
-    HELLO <vestDeviceId> <playerName>
-    HIT <attackerPlayerId>
-*/
-
 /**
  * @brief Accepts new vest TCP connections and processes messages from connected vests.
+ * @note Accept new vest connections and process vest messages.
+ *       HELLO <vestDeviceId> <playerName>
+ *       HIT <attackerPlayerId>
  */
 void handleDeviceConnections();
 
@@ -317,6 +298,8 @@ void syncAllPlayersRoundState();
  * @brief Builds the STATE line sent to one vest client.
  * @param index Player slot index whose state is being serialized.
  * @return Complete STATE message line.
+ * @note  Text protocol sent to vest:
+ *        STATE PLAYERID=<id> MODE=<mode> ALIVE=<0/1> CANSHOOT=<0/1> HP=<hp> SCORE=<score> TIMER=<seconds/flag>
  */
 String buildStateMessage(int index);
 

@@ -51,12 +51,6 @@ void loop() {
   handleDeviceConnections();
   handleWebClients();
 
-  if (gameMode == "Free For All" && ffaTimerRunning && getRemainingFFATime() == 0) {
-    disableAllShooting();
-    statusMessage = "Free For All ended.";
-    ffaTimerRunning = false;
-  }
-
   static unsigned long lastPrint = 0;
   if (millis() - lastPrint >= 3000) {
     lastPrint = millis();
