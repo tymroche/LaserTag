@@ -48,8 +48,7 @@ Three 1.5V AA batteries wired in series, supplying 4.5V to the ESP32-C6. Housed 
 ### Vest & Velcro
 T-shirt worn by the player to serve as a mounting surface for the game modules. Velcro used to attach and secure each module to the vest.
 
-> Refer to the project slideshow for a fully labelled component diagram.
-
+> Refer to the [project slideshow](LaserTag.pptx) for a fully labelled component diagram.
 ---
 
 ## System Overview
