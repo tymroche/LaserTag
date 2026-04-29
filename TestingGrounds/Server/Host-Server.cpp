@@ -20,14 +20,17 @@ const char* password = "lasertag";
 WiFiServer webServer(80); //Socket on port 80 for HTTP requests.
 WiFiServer deviceServer(27015); //Socket on port 27015 for TCP requests between player and host.
 
-const int MAX_PLAYERS = 4;
+String header = "";
+Player players[MAX_PLAYERS];
+WiFiClient deviceClients[MAX_PLAYERS];
+int rankedPlayers[MAX_PLAYERS];
+
 const int STARTING_HP = 5;
 const int STARTING_FFA_POINTS = 0;
 const int FFA_HIT_GAIN = 100;
 const int FFA_HIT_LOSS = 50;
 const int DEFAULT_FFA_SECONDS = 90;
 
-String header = "";
 String gameMode = "Free For All";
 String statusMessage = "";
 
@@ -35,6 +38,9 @@ int rankedCount = 0;
 
 int ffaDurationSeconds = DEFAULT_FFA_SECONDS;
 bool ffaTimerRunning = false;
+bool duelsGameRunning = false;
+bool roundOver = false;
+String roundOverMessage = "";
 unsigned long ffaStartMillis = 0;
 
 /**
@@ -81,22 +87,15 @@ String getQueryValue(String req, String key) {
   return decodeUrl(req.substring(start, end)); //return parsed value
 }
 
-/*
-  Convert a player slot number to the assigned IR/player ID.
-  slot 0 x01
-  slot 1 x02
-  slot 2 x03
-  slot 3 x04
-*/
+
 /**
  * @brief Converts player slot index to assigned player ID for IR.
  * @param slot player slot index.
- * @return Player ID (x01-x04) for valid slots, or an empty string for an invalid slot.
+ * @return Player ID for valid slots, or an empty string for an invalid slot.
  */
 String slotToPlayerId(int slot) {
   if (slot < 0 || slot >= MAX_PLAYERS) return "";
-  if (slot < 3) return "x0" + String(slot + 1);
-  return "x" + String(slot + 1);
+  return String(slot + 1);
 }
 
 /**
@@ -160,11 +159,11 @@ void resetPlayerForCurrentMode(int index) {
   players[index].hp = STARTING_HP;
   players[index].score = STARTING_FFA_POINTS;
   players[index].alive = true;
-  players[index].canShoot = true;
+  players[index].canShoot = false;
 }
 
 /**
- * @brief Initializes/resets all player records and closes any client connections.
+ * @brief Resets all player records and closes any client connections.
  */
 void resetAllPlayers() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
@@ -175,9 +174,13 @@ void resetAllPlayers() {
     players[i].score = STARTING_FFA_POINTS;
     players[i].active = false;
     players[i].alive = true;
-    players[i].canShoot = true;
+    players[i].canShoot = false;
     deviceClients[i].stop();
   }
+  ffaTimerRunning = false;
+  duelsGameRunning = false;
+  roundOver = false;
+  roundOverMessage = "";
 }
 
 /*UNDER CONSTRUCTION, WOULD LIKE TO HAVE TIMER ACTIVELY DISPLAY TIME*/
@@ -215,6 +218,150 @@ String formatTime(int totalSeconds) {
 }
 
 /**
+ * @brief Clears the current round-over state and winner message.
+ */
+void clearRoundOverState() {
+  roundOver = false;
+  roundOverMessage = "";
+}
+
+/**
+ * @brief Checks whether the current round has ended and updates round-over state.
+ * @return true if the round is over, otherwise false.
+ */
+bool isRoundOver() {
+  if (gameMode == "Free For All") {
+    if (!ffaTimerRunning && getRemainingFFATime() == 0) {
+      int bestIndex = -1;
+      bool tie = false;
+
+      for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (!players[i].active) continue;
+
+        if (bestIndex < 0 || players[i].score > players[bestIndex].score) {
+          bestIndex = i;
+          tie = false;
+        } else if (bestIndex >= 0 && players[i].score == players[bestIndex].score) {
+          tie = true;
+        }
+      }
+
+      roundOver = true;
+      if (bestIndex < 0) {
+        roundOverMessage = "Round Over - No winner.";
+      } else if (tie) {
+        roundOverMessage = "Round Over - Tie game!";
+      } else {
+        roundOverMessage = "Round Over - " + players[bestIndex].name + " wins Free For All!";
+      }
+
+      return true;
+    }
+    return false;
+  }
+
+  if (gameMode == "Duels") {
+    if (!duelsGameRunning) return roundOver;
+
+    int aliveCount = 0;
+    int winnerIndex = -1;
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+      if (!players[i].active) continue;
+      if (!players[i].alive) continue;
+      aliveCount++;
+      winnerIndex = i;
+    }
+
+    if (aliveCount <= 1) {
+      duelsGameRunning = false;
+      roundOver = true;
+
+      if (winnerIndex >= 0) {
+        roundOverMessage = "Round Over - " + players[winnerIndex].name + " wins Duels!";
+      } else {
+        roundOverMessage = "Round Over - No winner.";
+      }
+
+      sendStateToAllPlayers();
+      return true;
+    }
+  }
+
+  return roundOver;
+}
+
+/**
+ * @brief Returns true when the current mode is actively running.
+ * @return true if the current mode is in an active round; otherwise false.
+ */
+bool isGameRunning() {
+  if (gameMode == "Free For All") {
+    return ffaTimerRunning && getRemainingFFATime() > 0;
+  }
+  if (gameMode == "Duels") {
+    return duelsGameRunning;
+  }
+  return false;
+}
+
+/**
+ * @brief Returns the timer value that should be sent to vest clients.
+ * @return Remaining FFA time during Free For All, 1 during active Duels, otherwise 0.
+ */
+int getTimerValueForState() {
+  if (gameMode == "Free For All") {
+    return getRemainingFFATime();
+  }
+  if (gameMode == "Duels") {
+    return duelsGameRunning ? 1 : 0;
+  }
+  return 0;
+}
+
+/**
+ * @brief Applies current mode state to one player's alive/canShoot fields.
+ * @param index Player slot index to update.
+ */
+void syncPlayerRoundState(int index) {
+  if (index < 0 || index >= MAX_PLAYERS) return;
+  if (!players[index].active) return;
+
+  if (!players[index].alive) {
+    players[index].canShoot = false;
+    return;
+  }
+
+  players[index].canShoot = isGameRunning();
+}
+
+/**
+ * @brief Applies current mode state to all active players.
+ */
+void syncAllPlayersRoundState() {
+  for (int i = 0; i < MAX_PLAYERS; i++) {
+    syncPlayerRoundState(i);
+  }
+}
+
+/**
+ * @brief Builds the STATE line sent to one vest client.
+ * @param index Player slot index whose state is being serialized.
+ * @return Complete STATE message line.
+ */
+String buildStateMessage(int index) {
+  String msg = "STATE ";
+  msg += "PLAYERID=" + players[index].playerId;
+  msg += " MODE=" + gameMode;
+  msg += " ALIVE=" + String(players[index].alive ? 1 : 0);
+  msg += " CANSHOOT=" + String(players[index].canShoot ? 1 : 0);
+  msg += " HP=" + String(players[index].hp);
+  msg += " SCORE=" + String(players[index].score);
+  msg += " TIMER=" + String(getTimerValueForState());
+  return msg;
+}
+
+/**
  * @brief Send the current host state to one vest.
  * Includes the assigned PLAYERID that the vest should use in IR transmit.
  * @param index Player slot whose vest should receive the state update.
@@ -224,63 +371,19 @@ void sendStateToPlayer(int index) {
   if (!players[index].active) return;
   if (!deviceClients[index] || !deviceClients[index].connected()) return;
 
-  int timerValue = 0;
-  if (gameMode == "Free For All") {
-    timerValue = getRemainingFFATime();
-  }
-
-  String msg = "STATE ";
-  msg += "PLAYERID=" + players[index].playerId;
-  msg += " MODE=" + gameMode;
-  msg += " ALIVE=" + String(players[index].alive ? 1 : 0);
-  msg += " CANSHOOT=" + String(players[index].canShoot ? 1 : 0);
-  msg += " HP=" + String(players[index].hp);
-  msg += " SCORE=" + String(players[index].score);
-  msg += " TIMER=" + String(timerValue);
-
-  deviceClients[index].println(msg);
+  syncPlayerRoundState(index);
+  deviceClients[index].println(buildStateMessage(index));
 }
 
 /**
  * @brief Sends game state to every player slot.
  */
 void sendStateToAllPlayers() {
+  syncAllPlayersRoundState();
   for (int i = 0; i < MAX_PLAYERS; i++) {
     sendStateToPlayer(i);
   }
 }
-
-/*
-  TEST FUNCTION FOR PLAYER SLOT VALIDITY; REMOVE WHEN DONE
-*/
-/**
- * @brief Adds a browser-only player to the lobby if a name is valid and a slot is available.
- * @param name Display name to assign to the new browser-only player.
- */
-void addBrowserPlayer(String name) {
-  if (name.length() == 0) {
-    statusMessage = "Please enter a name.";
-    return;
-  }
-  if (findPlayerByName(name) >= 0) {
-    statusMessage = name + " is already connected.";
-    return;
-  }
-  int slot = findOpenSlot();
-  if (slot < 0) {
-    statusMessage = "Lobby is full.";
-    return;
-  }
-
-  players[slot].name = name;
-  players[slot].vestDeviceId = "";
-  players[slot].playerId = slotToPlayerId(slot);
-  players[slot].active = true;
-  resetPlayerForCurrentMode(slot);
-
-  statusMessage = name + " joined the game as " + players[slot].playerId + ".";
-}
-
 
 /**
  * @brief Removes one player from the lobby and disconnects any linked vest client.
@@ -304,7 +407,7 @@ void removePlayer(int index) {
   players[index].score = STARTING_FFA_POINTS;
   players[index].active = false;
   players[index].alive = true;
-  players[index].canShoot = true;
+  players[index].canShoot = false;
 
   statusMessage = removedName + " was removed.";
 }
@@ -314,8 +417,11 @@ void removePlayer(int index) {
  */
 void removeAllPlayers() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
-    removePlayer(i);
+    if (players[i].active) {
+      removePlayer(i);
+    }
   }
+  clearRoundOverState();
   statusMessage = "All players removed.";
 }
 
@@ -368,9 +474,9 @@ void disableAllShooting() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active) {
       players[i].canShoot = false;
-      sendStateToPlayer(i);
     }
   }
+  sendStateToAllPlayers();
 }
 
 /*
@@ -382,7 +488,9 @@ void disableAllShooting() {
  */
 void startFFATimer() {
   ffaTimerRunning = true;
+  duelsGameRunning = false;
   ffaStartMillis = millis();
+  clearRoundOverState();
   statusMessage = "Free For All timer started.";
   sendStateToAllPlayers();
 }
@@ -401,7 +509,28 @@ void stopFFATimer() {
  */
 void resetFFATimer() {
   ffaTimerRunning = false;
+  clearRoundOverState();
   statusMessage = "Free For All timer reset.";
+  sendStateToAllPlayers();
+}
+
+/**
+ * @brief Starts Duels game and broadcasts updated state.
+ */
+void startDuelsGame() {
+  duelsGameRunning = true;
+  ffaTimerRunning = false;
+  clearRoundOverState();
+  statusMessage = "Duels game started.";
+  sendStateToAllPlayers();
+}
+
+/**
+ * @brief Stops Duels game and broadcasts updated state.
+ */
+void stopDuelsGame() {
+  duelsGameRunning = false;
+  statusMessage = "Duels game stopped.";
   sendStateToAllPlayers();
 }
 
@@ -412,6 +541,8 @@ void resetFFATimer() {
 void setGameMode(String newMode) {
   gameMode = newMode;
   ffaTimerRunning = false;
+  duelsGameRunning = false;
+  clearRoundOverState();
 
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active) {
@@ -419,7 +550,7 @@ void setGameMode(String newMode) {
     }
   }
 
-  statusMessage = "Gamemode set to " + gameMode + ".";
+  statusMessage = "Gamemode set to " + gameMode + ". Press Start Game to begin.";
   sendStateToAllPlayers();
 }
 
@@ -443,23 +574,9 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
     deviceClients[existingVest] = client;
     players[existingVest].name = name;
     players[existingVest].active = true;
+    syncPlayerRoundState(existingVest);
     statusMessage = name + " reconnected as " + players[existingVest].playerId + ".";
     sendStateToPlayer(existingVest);
-    return;
-  }
-
-  int existingName = findPlayerByName(name);
-  if (existingName >= 0) {
-    if (deviceClients[existingName]) {
-      deviceClients[existingName].stop();
-    }
-    deviceClients[existingName] = client;
-    players[existingName].vestDeviceId = vestDeviceId;
-    if (players[existingName].playerId == "") {
-      players[existingName].playerId = slotToPlayerId(existingName);
-    }
-    statusMessage = name + " device linked as " + players[existingName].playerId + ".";
-    sendStateToPlayer(existingName);
     return;
   }
 
@@ -476,6 +593,7 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
   players[slot].playerId = slotToPlayerId(slot);
   players[slot].active = true;
   resetPlayerForCurrentMode(slot);
+  syncPlayerRoundState(slot);
 
   deviceClients[slot] = client;
 
@@ -486,7 +604,7 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
 
 /*
   Process one hit report.
-  e.g. HIT x02
+  e.g. HIT 2
 */
 
 /**
@@ -500,25 +618,30 @@ void processHitReport(int targetIndex, String attackerId) {
   if (targetIndex < 0 || targetIndex >= MAX_PLAYERS) return;
   if (attackerIndex < 0 || attackerIndex >= MAX_PLAYERS) return;
   if (!players[targetIndex].active || !players[attackerIndex].active) return;
+  if (attackerIndex == targetIndex) return;
+  if (!players[targetIndex].alive || !players[attackerIndex].alive) return;
+  if (!isGameRunning()) return;
+  if (!players[attackerIndex].canShoot) return;
 
   if (gameMode == "Free For All") {
-    if (getRemainingFFATime() <= 0) return;
-    if (!players[attackerIndex].canShoot) return;
+    if (getRemainingFFATime() <= 0) {
+      stopFFATimer();
+      isRoundOver();
+      return;
+    }
 
     players[attackerIndex].score += FFA_HIT_GAIN;
     players[targetIndex].score -= FFA_HIT_LOSS;
 
     statusMessage = players[attackerIndex].name + " hit " + players[targetIndex].name + ".";
 
+    isRoundOver();
     sendStateToPlayer(attackerIndex);
     sendStateToPlayer(targetIndex);
     return;
   }
 
   if (gameMode == "Duels") {
-    if (!players[attackerIndex].canShoot) return;
-    if (!players[targetIndex].alive) return;
-
     players[targetIndex].hp -= 1;
 
     if (players[targetIndex].hp <= 0) {
@@ -530,6 +653,7 @@ void processHitReport(int targetIndex, String attackerId) {
       statusMessage = players[targetIndex].name + " was hit.";
     }
 
+    isRoundOver();
     sendStateToPlayer(attackerIndex);
     sendStateToPlayer(targetIndex);
   }
@@ -543,44 +667,73 @@ void processHitReport(int targetIndex, String attackerId) {
 */
 
 /**
- * @brief Accepts new vest TCP connections and processes messages from connected vests.
+ * @brief Reads the HELLO line from a newly connected vest.
+ * @param client Newly connected TCP client.
+ * @return Parsed HELLO line, or an empty string on timeout/failure.
  */
-void handleDeviceConnections() {
-  WiFiClient newClient = deviceServer.available();
+String readHelloLine(WiFiClient& client) {
+  unsigned long start = millis();
+  String hello = "";
 
-  if (newClient) { // new connection message
-    unsigned long start = millis();
-    String hello = "";
-
-    while (newClient.connected() && millis() - start < 1000) {
-      while (newClient.available()) {
-        char c = newClient.read();
-        if (c == '\n') {
-          hello.trim();
-          start = 2000;
-          break;
-        }
-        if (c != '\r') hello += c;
+  while (client.connected() && millis() - start < 1000) {
+    while (client.available()) {
+      char c = client.read();
+      if (c == '\n') {
+        hello.trim();
+        return hello;
       }
-      if (start == 2000) break;
-    }
-
-    if (hello.startsWith("HELLO ")) { // make new connection in server
-      int firstSpace = hello.indexOf(' ', 6);
-      if (firstSpace > 0) {
-        String vestDeviceId = hello.substring(6, firstSpace);
-        String name = hello.substring(firstSpace + 1);
-        name.trim();
-        registerVest(vestDeviceId, name, newClient);
-      } else {
-        newClient.stop();
+      if (c != '\r') {
+        hello += c;
       }
-    } else {
-      newClient.stop();
     }
   }
 
-  for (int i = 0; i < MAX_PLAYERS; i++) { //message processing loop
+  return "";
+}
+
+/**
+ * @brief Removes vest clients that have disconnected from the host.
+ */
+void cleanupDisconnectedClients() {
+  for (int i = 0; i < MAX_PLAYERS; i++) {
+    if (players[i].active && deviceClients[i] && !deviceClients[i].connected()) {
+      String removedName = players[i].name;
+      removePlayer(i);
+      statusMessage = removedName + " disconnected and was removed from the session.";
+    }
+  }
+}
+
+/**
+ * @brief Handles one new vest connection if available.
+ */
+void handleNewDeviceConnection() {
+  WiFiClient newClient = deviceServer.available();
+  if (!newClient) return;
+
+  String hello = readHelloLine(newClient);
+  if (!hello.startsWith("HELLO ")) {
+    newClient.stop();
+    return;
+  }
+
+  int firstSpace = hello.indexOf(' ', 6);
+  if (firstSpace <= 0) {
+    newClient.stop();
+    return;
+  }
+
+  String vestDeviceId = hello.substring(6, firstSpace);
+  String name = hello.substring(firstSpace + 1);
+  name.trim();
+  registerVest(vestDeviceId, name, newClient);
+}
+
+/**
+ * @brief Handles incoming messages from already connected vest clients.
+ */
+void handleExistingDeviceMessages() {
+  for (int i = 0; i < MAX_PLAYERS; i++) {
     if (deviceClients[i] && deviceClients[i].connected() && deviceClients[i].available()) {
       String line = deviceClients[i].readStringUntil('\n');
       line.trim();
@@ -595,13 +748,26 @@ void handleDeviceConnections() {
 }
 
 /**
+ * @brief Accepts new vest TCP connections and processes messages from connected vests.
+ */
+void handleDeviceConnections() {
+  cleanupDisconnectedClients();
+
+  if (gameMode == "Free For All" && ffaTimerRunning && getRemainingFFATime() <= 0) {
+    stopFFATimer();
+    isRoundOver();
+  }
+
+  handleNewDeviceConnection();
+  handleExistingDeviceMessages();
+}
+
+/**
  * @brief Processes a browser request.
  * @param req HTTP request string to inspect for actions.
  */
 void handleBrowserAction(String req) {
-  if (req.indexOf("GET /join?name=") >= 0) {
-    addBrowserPlayer(getQueryValue(req, "name"));
-  } else if (req.indexOf("GET /mode/ffa") >= 0) {
+  if (req.indexOf("GET /mode/ffa") >= 0) {
     setGameMode("Free For All");
   } else if (req.indexOf("GET /mode/duels") >= 0) {
     setGameMode("Duels");
@@ -610,21 +776,29 @@ void handleBrowserAction(String req) {
   } else if (req.indexOf("GET /clear") >= 0) {
     removeAllPlayers();
   } else if (req.indexOf("GET /time/add15") >= 0) {
-  ffaDurationSeconds += 15;
-  statusMessage = "Free For All time set to " + formatTime(ffaDurationSeconds) + ".";
-  sendStateToAllPlayers();
-} else if (req.indexOf("GET /time/sub15") >= 0) {
-  if (ffaDurationSeconds > 15) {
-    ffaDurationSeconds -= 15;
-  } else {
-    ffaDurationSeconds = 15;
-  }
-  statusMessage = "Free For All time set to " + formatTime(ffaDurationSeconds) + ".";
-  sendStateToAllPlayers();
-  } else if (req.indexOf("GET /timer/start") >= 0) {
-    if (gameMode == "Free For All") startFFATimer();
-  } else if (req.indexOf("GET /timer/stop") >= 0) {
-    stopFFATimer();
+    ffaDurationSeconds += 15;
+    statusMessage = "Free For All time set to " + formatTime(ffaDurationSeconds) + ".";
+    sendStateToAllPlayers();
+  } else if (req.indexOf("GET /time/sub15") >= 0) {
+    if (ffaDurationSeconds > 15) {
+      ffaDurationSeconds -= 15;
+    } else {
+      ffaDurationSeconds = 15;
+    }
+    statusMessage = "Free For All time set to " + formatTime(ffaDurationSeconds) + ".";
+    sendStateToAllPlayers();
+  } else if (req.indexOf("GET /game/start") >= 0) {
+    if (gameMode == "Free For All") {
+      startFFATimer();
+    } else if (gameMode == "Duels") {
+      startDuelsGame();
+    }
+  } else if (req.indexOf("GET /game/stop") >= 0) {
+    if (gameMode == "Free For All") {
+      stopFFATimer();
+    } else if (gameMode == "Duels") {
+      stopDuelsGame();
+    }
   } else if (req.indexOf("GET /timer/reset") >= 0) {
     resetFFATimer();
   }
@@ -663,6 +837,10 @@ void serveWebPage(WiFiClient& client) {
 
   client.println("<!DOCTYPE html><html>");
   client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+  if (!roundOver) {
+    client.println("<meta http-equiv=\"refresh\" content=\"5\">");
+  }
+
   client.println("<link rel=\"icon\" href=\"data:,\">");
 
   client.println("<style>");
@@ -676,10 +854,7 @@ void serveWebPage(WiFiClient& client) {
   client.println(".mode-btn { display: inline-block; width: 44%; max-width: 160px; padding: 12px; border-radius: 10px; text-decoration: none; color: white; background: #2f80ed; font-size: 1rem; }");
   client.println(".mode-btn.active { background: #27ae60; }");
   client.println(".time-btn { display: inline-block; margin: 6px; padding: 10px 14px; border-radius: 8px; text-decoration: none; color: white; background: #16a085; font-size: 0.95rem; }");
-  client.println(".time-btn.active { background: #27ae60; }");
   client.println(".timer-btn { display: inline-block; margin: 6px; padding: 10px 14px; border-radius: 8px; text-decoration: none; color: white; background: #2f80ed; font-size: 0.95rem; }");
-  client.println("input[type=text] { width: 90%; padding: 12px; font-size: 1rem; border-radius: 10px; border: none; margin-top: 10px; margin-bottom: 12px; }");
-  client.println("button { width: 95%; padding: 12px; font-size: 1rem; border: none; border-radius: 10px; background: #2f80ed; color: white; }");
   client.println(".status { font-size: 1rem; font-weight: bold; margin-top: 12px; }");
   client.println(".player { padding: 12px; border-radius: 10px; background: #2a2a2a; margin-bottom: 10px; text-align: left; }");
   client.println(".player-name { font-size: 1.1rem; font-weight: bold; margin-bottom: 6px; }");
@@ -694,6 +869,14 @@ void serveWebPage(WiFiClient& client) {
   client.println("</head><body><div class=\"container\">");
 
   client.println("<div class=\"card\"><h1>Laser Tag</h1></div>");
+
+  if (roundOver) {
+    client.println("<div class=\"card\" style=\"background:#27ae60; color:white;\">");
+    client.println("<h2>Round Over</h2>");
+    client.println("<div class=\"timer-value\">" + roundOverMessage + "</div>");
+    client.println("<div class=\"hint\">Start a new round when ready.</div>");
+    client.println("</div>");
+  }
 
   client.println("<div class=\"card\">");
   client.println("<h2>Gamemode</h2>");
@@ -712,26 +895,29 @@ void serveWebPage(WiFiClient& client) {
   client.println("<div class=\"hint\">Pick a mode.</div>");
   client.println("</div>");
 
+  client.println("<div class=\"card\">");
+
   if (gameMode == "Free For All") {
-    client.println("<div class=\"card\">");
     client.println("<h2>Free For All Timer</h2>");
     client.println("<div style=\"display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:12px;\">");
     client.println("<a class=\"time-btn\" href=\"/time/sub15\">- 15 sec</a>");
     client.println("<div class=\"timer-value\" style=\"margin-bottom:0; min-width:90px;\">" + formatTime(getRemainingFFATime()) + "</div>");
     client.println("<a class=\"time-btn\" href=\"/time/add15\">+ 15 sec</a>");
     client.println("</div>");
-
-    client.println("<div>");
-    client.println("<a class=\"timer-btn\" href=\"/timer/start\">Start Game</a>");
-    client.println("<a class=\"timer-btn\" href=\"/timer/stop\">Stop Game</a>");
+  } else {
+    client.println("<h2>Duels Controls</h2>");
+    client.println("<div class=\"timer-value\" style=\"margin-bottom:0; min-width:90px;\">");
+    client.println(duelsGameRunning ? "Live" : "Waiting");
     client.println("</div>");
   }
 
-  client.println("<div class=\"card\">");
-  client.println("<h2>Join Game</h2>");
-  client.println("<form action=\"/join\" method=\"get\">");
-  client.println("<input type=\"text\" name=\"name\" placeholder=\"Enter a browser-only name\">");
-  client.println("<br><button type=\"submit\">Join</button></form>");
+  client.println("<div>");
+  client.println("<a class=\"timer-btn\" href=\"/game/start\">Start Game</a>");
+  client.println("<a class=\"timer-btn\" href=\"/game/stop\">Stop Game</a>");
+  if (gameMode == "Free For All") {
+    client.println("<a class=\"timer-btn\" href=\"/timer/reset\">Reset Timer</a>");
+  }
+  client.println("</div>");
 
   if (statusMessage.length() > 0) {
     client.println("<div class=\"status\">" + statusMessage + "</div>");
@@ -745,7 +931,7 @@ void serveWebPage(WiFiClient& client) {
   if (rankedCount == 0) {
     client.println("<div class=\"player\">");
     client.println("<div class=\"player-name\">No players yet</div>");
-    client.println("<div class=\"player-stat\">Join to appear on the scoreboard.</div>");
+    client.println("<div class=\"player-stat\">Connect a vest to appear on the scoreboard.</div>");
     client.println("</div>");
   } else {
     for (int k = 0; k < rankedCount; k++) {
@@ -781,6 +967,24 @@ void serveWebPage(WiFiClient& client) {
 }
 
 /**
+ * @brief Returns whether a browser request should be redirected after action processing.
+ * @param requestLine First line of the HTTP request.
+ * @return true if the request mutates state and should redirect; otherwise false.
+ */
+bool isActionRequest(String requestLine) {
+  return
+    requestLine.indexOf("GET /mode/ffa") >= 0 ||
+    requestLine.indexOf("GET /mode/duels") >= 0 ||
+    requestLine.indexOf("GET /remove?slot=") >= 0 ||
+    requestLine.indexOf("GET /clear") >= 0 ||
+    requestLine.indexOf("GET /time/add15") >= 0 ||
+    requestLine.indexOf("GET /time/sub15") >= 0 ||
+    requestLine.indexOf("GET /game/start") >= 0 ||
+    requestLine.indexOf("GET /game/stop") >= 0 ||
+    requestLine.indexOf("GET /timer/reset") >= 0;
+}
+
+/**
  * @brief Accepts browser connections, parses requests, and serves html page.
  */
 void handleWebClients() {
@@ -789,13 +993,14 @@ void handleWebClients() {
 
   String currentLine = "";
   String requestLine = "";
+  header = "";
 
   while (client.connected()) {
     if (client.available()) {
-      char c = client.read();
-      header += c;
+      char clientChar = client.read();
+      header += clientChar;
 
-      if (c == '\n') {
+      if (clientChar == '\n') {
         if (requestLine.length() == 0 && currentLine.length() > 0) {
           requestLine = currentLine;
         }
@@ -805,21 +1010,10 @@ void handleWebClients() {
           Serial.print(WiFi.softAPgetStationNum());
           Serial.println(" | New Client");
 
-          bool isActionRequest =
-            requestLine.indexOf("GET /join?name=") >= 0 ||
-            requestLine.indexOf("GET /mode/ffa") >= 0 ||
-            requestLine.indexOf("GET /mode/duels") >= 0 ||
-            requestLine.indexOf("GET /remove?slot=") >= 0 ||
-            requestLine.indexOf("GET /clear") >= 0 ||
-            requestLine.indexOf("GET /time/add15") >= 0 ||
-            requestLine.indexOf("GET /time/sub15") >= 0 ||
-            requestLine.indexOf("GET /timer/start") >= 0 ||
-            requestLine.indexOf("GET /timer/stop") >= 0 ||
-            requestLine.indexOf("GET /timer/reset") >= 0;
-
+          bool action = isActionRequest(requestLine);
           handleBrowserAction(header);
 
-          if (isActionRequest) {
+          if (action) {
             redirectToHome(client);
           } else {
             serveWebPage(client);
@@ -828,8 +1022,8 @@ void handleWebClients() {
         } else {
           currentLine = "";
         }
-      } else if (c != '\r') {
-        currentLine += c;
+      } else if (clientChar != '\r') {
+        currentLine += clientChar;
       }
     }
   }
