@@ -24,11 +24,11 @@ extern String header;
 extern String gameMode;
 extern String statusMessage;
 
-extern const int STARTING_HP;
-extern const int STARTING_FFA_POINTS;
-extern const int FFA_HIT_GAIN;
-extern const int FFA_HIT_LOSS;
-extern const int DEFAULT_FFA_SECONDS;
+extern const uint8_t STARTING_HP;
+extern const int16_t STARTING_FFA_POINTS;
+extern const int16_t FFA_HIT_GAIN;
+extern const int16_t FFA_HIT_LOSS;
+extern const uint16_t DEFAULT_FFA_SECONDS;
 
 extern const char* ssid;
 extern const char* password;
@@ -43,8 +43,8 @@ struct Player {
   String name;
   String vestDeviceId;
   String playerId;
-  int hp;
-  int score;
+  uint8_t hp;
+  int16_t score;
   bool active;
   bool alive;
   bool canShoot;
@@ -53,10 +53,10 @@ struct Player {
 extern Player players[MAX_PLAYERS];
 extern WiFiClient deviceClients[MAX_PLAYERS];
 
-extern int rankedPlayers[MAX_PLAYERS];
-extern int rankedCount;
+extern uint8_t rankedPlayers[MAX_PLAYERS];
+extern uint8_t rankedCount;
 
-extern int ffaDurationSeconds;
+extern uint16_t ffaDurationSeconds;
 extern bool ffaTimerRunning;
 extern bool duelsGameRunning;
 extern bool roundOver;
@@ -93,33 +93,33 @@ String getQueryValue(String req, String key);
  * @param slot player slot index.
  * @return Player ID (1-4) for valid slots, or an empty string for an invalid slot.
  */
-String slotToPlayerId(int slot);
+String slotToPlayerId(int8_t slot);
 
 /**
  * @brief Find a player slot by vest ID.
  * @param vestDeviceId Vest ID.
  * @return Matching player slot or -1.
  */
-int findPlayerByVestDeviceId(String vestDeviceId);
+int8_t findPlayerByVestDeviceId(String vestDeviceId);
 
 /**
  * @brief Find a player slot by assigned game player ID.
  * @param playerId Assigned player ID.
  * @return Matching player slot index or -1.
  */
-int findPlayerByAssignedPlayerId(String playerId);
+int8_t findPlayerByAssignedPlayerId(String playerId);
 
 /**
  * @brief Finds the first unused player slot.
  * @return Index of the first free player slot, or -1 if the lobby is full.
  */
-int findOpenSlot();
+int8_t findOpenSlot();
 
 /**
  * @brief Resets one player's stats for the current mode.
  * @param index Player slot index to reset.
  */
-void resetPlayerForCurrentMode(int index);
+void resetPlayerForCurrentMode(int8_t index);
 
 /**
  * @brief Resets all player records and closes any client connections.
@@ -132,21 +132,21 @@ void resetAllPlayers();
  * @brief Computes the time remaining for Free For All timer.
  * @return Remaining timer value in seconds, or zero once the timer has expired.
  */
-int getRemainingFFATime();
+uint16_t getRemainingFFATime();
 
 /**
  * @brief Formats seconds as minutes:seconds.
  * @param totalSeconds Total seconds.
  * @return Formatted string in M:SS form.
  */
-String formatTime(int totalSeconds);
+String formatTime(uint16_t totalSeconds);
 
 /**
  * @brief Send the current host state to one vest.
  * Includes the assigned PLAYERID that the vest should use in IR transmit.
  * @param index Player slot whose vest should receive the state update.
  */
-void sendStateToPlayer(int index);
+void sendStateToPlayer(int8_t index);
 
 /**
  * @brief Sends game state to every player slot.
@@ -157,7 +157,7 @@ void sendStateToAllPlayers();
  * @brief Removes one player from the lobby and disconnects any linked vest client.
  * @param index Player slot index to remove.
  */
-void removePlayer(int index);
+void removePlayer(int8_t index);
 
 /**
  * @brief Removes all player from lobby.
@@ -170,7 +170,7 @@ void removeAllPlayers();
  * @param b Second player slot index to compare.
  * @return true if player a should rank above player b; otherwise false.
  */
-bool ranksHigher(int a, int b);
+bool ranksHigher(int8_t a, int8_t b);
 
 /**
  * @brief Builds sorted player list used by scoreboard.
@@ -226,7 +226,7 @@ void registerVest(String vestDeviceId, String name, WiFiClient client);
  * @param attackerId Assigned player ID of the attacker IR.
  * @note Process one hit report. e.g. HIT 2
  */
-void processHitReport(int targetIndex, String attackerId);
+void processHitReport(int8_t targetIndex, String attackerId);
 
 /**
  * @brief Accepts new vest TCP connections and processes messages from connected vests.
@@ -281,13 +281,13 @@ bool isGameRunning();
  * @brief Returns the timer value that should be sent to vest clients.
  * @return Remaining FFA time during Free For All, 1 during active Duels, otherwise 0.
  */
-int getTimerValueForState();
+uint16_t getTimerValueForState();
 
 /**
  * @brief Applies current mode state to one player's alive/canShoot fields.
  * @param index Player slot index to update.
  */
-void syncPlayerRoundState(int index);
+void syncPlayerRoundState(int8_t index);
 
 /**
  * @brief Applies current mode state to all active players.
@@ -301,7 +301,7 @@ void syncAllPlayersRoundState();
  * @note  Text protocol sent to vest:
  *        STATE PLAYERID=<id> MODE=<mode> ALIVE=<0/1> CANSHOOT=<0/1> HP=<hp> SCORE=<score> TIMER=<seconds/flag>
  */
-String buildStateMessage(int index);
+String buildStateMessage(int8_t index);
 
 /**
  * @brief Reads the HELLO line from a newly connected vest.
@@ -331,5 +331,10 @@ void cleanupDisconnectedClients();
  * @return true if the request mutates state and should redirect; otherwise false.
  */
 bool isActionRequest(String requestLine);
+
+/**
+ * @brief clears all stale tcp requests so that they don't instantly report at the start of a new round
+ */
+void clearPendingDeviceMessages();
 
 #endif
