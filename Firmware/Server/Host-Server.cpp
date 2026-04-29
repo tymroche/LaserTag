@@ -23,20 +23,20 @@ WiFiServer deviceServer(27015); //Socket on port 27015 for TCP requests between 
 String header = "";
 Player players[MAX_PLAYERS];
 WiFiClient deviceClients[MAX_PLAYERS];
-int rankedPlayers[MAX_PLAYERS];
+uint8_t rankedPlayers[MAX_PLAYERS];
 
-const int STARTING_HP = 5;
-const int STARTING_FFA_POINTS = 0;
-const int FFA_HIT_GAIN = 100;
-const int FFA_HIT_LOSS = 50;
-const int DEFAULT_FFA_SECONDS = 90;
+const uint8_t STARTING_HP = 5;
+const int16_t STARTING_FFA_POINTS = 0;
+const int16_t FFA_HIT_GAIN = 100;
+const int16_t FFA_HIT_LOSS = 50;
+const uint16_t DEFAULT_FFA_SECONDS = 90;
 
 String gameMode = "Free For All";
 String statusMessage = "";
 
-int rankedCount = 0;
+uint8_t rankedCount = 0;
 
-int ffaDurationSeconds = DEFAULT_FFA_SECONDS;
+uint16_t ffaDurationSeconds = DEFAULT_FFA_SECONDS;
 bool ffaTimerRunning = false;
 bool duelsGameRunning = false;
 bool roundOver = false;
@@ -76,13 +76,13 @@ String getQueryValue(String req, String key) {
   return decodeUrl(req.substring(start, end)); //return parsed value
 }
 
-String slotToPlayerId(int slot) {
-  if (slot < 0 || slot >= MAX_PLAYERS) return "";
+String slotToPlayerId(int8_t slot) {
+  if (slot >= MAX_PLAYERS) return "";
   return String(slot + 1);
 }
 
-int findPlayerByVestDeviceId(String vestDeviceId) {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+int8_t findPlayerByVestDeviceId(String vestDeviceId) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active && players[i].vestDeviceId == vestDeviceId) {
       return i;
     }
@@ -90,8 +90,8 @@ int findPlayerByVestDeviceId(String vestDeviceId) {
   return -1;
 }
 
-int findPlayerByAssignedPlayerId(String playerId) {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+int8_t findPlayerByAssignedPlayerId(String playerId) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active && players[i].playerId == playerId) {
       return i;
     }
@@ -100,15 +100,15 @@ int findPlayerByAssignedPlayerId(String playerId) {
 }
 
 
-int findOpenSlot() {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+int8_t findOpenSlot() {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     if (!players[i].active) return i;
   }
   return -1;
 }
 
 
-void resetPlayerForCurrentMode(int index) {
+void resetPlayerForCurrentMode(int8_t index) {
   players[index].hp = STARTING_HP;
   players[index].score = STARTING_FFA_POINTS;
   players[index].alive = true;
@@ -117,7 +117,7 @@ void resetPlayerForCurrentMode(int index) {
 
 
 void resetAllPlayers() {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     players[i].name = "";
     players[i].vestDeviceId = "";
     players[i].playerId = "";
@@ -136,26 +136,22 @@ void resetAllPlayers() {
 
 /*UNDER CONSTRUCTION, WOULD LIKE TO HAVE TIMER ACTIVELY DISPLAY TIME*/
 
-int getRemainingFFATime() {
-  //ffa round not started
+uint16_t getRemainingFFATime() {
   if (!ffaTimerRunning) return ffaDurationSeconds;
 
-  int elapsed = (millis() - ffaStartMillis) / 1000;
-  int remaining = ffaDurationSeconds - elapsed;
+  uint32_t elapsed = (millis() - ffaStartMillis) / 1000;
 
-  if (remaining <= 0) {
-    //ffa round ended
+  if (elapsed >= ffaDurationSeconds) {
     ffaTimerRunning = false;
     return 0;
   }
-  //ffa round running
-  return remaining;
+
+  return ffaDurationSeconds - elapsed;
 }
 
-
-String formatTime(int totalSeconds) {
-  int minutes = totalSeconds / 60;
-  int seconds = totalSeconds % 60;
+String formatTime(uint16_t totalSeconds) {
+  uint16_t minutes = totalSeconds / 60;
+  uint8_t seconds = totalSeconds % 60;
 
   String out = String(minutes) + ":";
   if (seconds < 10) out += "0";
@@ -172,12 +168,11 @@ void clearRoundOverState() {
 
 bool isRoundOver() {
   if (gameMode == "Free For All") {
-    //
     if (!ffaTimerRunning && getRemainingFFATime() == 0) {
-      int bestIndex = -1;
+      int8_t bestIndex = -1;
       bool tie = false;
 
-      for (int i = 0; i < MAX_PLAYERS; i++) {
+      for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
         if (!players[i].active) continue;
 
         if (bestIndex < 0 || players[i].score > players[bestIndex].score) {
@@ -205,10 +200,10 @@ bool isRoundOver() {
   if (gameMode == "Duels") {
     if (!duelsGameRunning) return roundOver;
 
-    int aliveCount = 0;
-    int winnerIndex = -1;
+    uint8_t aliveCount = 0;
+    int8_t winnerIndex = -1;
 
-    for (int i = 0; i < MAX_PLAYERS; i++) {
+    for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
       if (!players[i].active) continue;
       if (!players[i].alive) continue;
       aliveCount++;
@@ -245,7 +240,7 @@ bool isGameRunning() {
 }
 
 
-int getTimerValueForState() {
+uint16_t getTimerValueForState() {
   if (gameMode == "Free For All") {
     return getRemainingFFATime();
   }
@@ -257,7 +252,7 @@ int getTimerValueForState() {
 }
 
 
-void syncPlayerRoundState(int index) {
+void syncPlayerRoundState(int8_t index) {
   if (index < 0 || index >= MAX_PLAYERS) return;
   if (!players[index].active) return;
 
@@ -271,13 +266,13 @@ void syncPlayerRoundState(int index) {
 
 
 void syncAllPlayersRoundState() {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     syncPlayerRoundState(i);
   }
 }
 
 
-String buildStateMessage(int index) {
+String buildStateMessage(int8_t index) {
   String msg = "STATE ";
   msg += "PLAYERID=" + players[index].playerId;
   msg += " MODE=" + gameMode;
@@ -290,7 +285,7 @@ String buildStateMessage(int index) {
 }
 
 
-void sendStateToPlayer(int index) {
+void sendStateToPlayer(int8_t index) {
   if (index < 0 || index >= MAX_PLAYERS) return;
   if (!players[index].active) return;
   if (!deviceClients[index] || !deviceClients[index].connected()) return;
@@ -302,13 +297,13 @@ void sendStateToPlayer(int index) {
 
 void sendStateToAllPlayers() {
   syncAllPlayersRoundState();
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     sendStateToPlayer(i);
   }
 }
 
 
-void removePlayer(int index) {
+void removePlayer(int8_t index) {
   if (index < 0 || index >= MAX_PLAYERS) return;
   if (!players[index].active) return;
 
@@ -333,7 +328,7 @@ void removePlayer(int index) {
 
 
 void removeAllPlayers() {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active) {
       removePlayer(i);
     }
@@ -343,7 +338,7 @@ void removeAllPlayers() {
 }
 
 
-bool ranksHigher(int a, int b) {
+bool ranksHigher(int8_t a, int8_t b) {
   if (gameMode == "Duels") {
     if (players[a].hp != players[b].hp) return players[a].hp > players[b].hp;
   } else {
@@ -357,19 +352,19 @@ bool ranksHigher(int a, int b) {
 void buildRankings() {
   rankedCount = 0;
 
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active) {
       rankedPlayers[rankedCount++] = i;
     }
   } // build array
 
-  for (int i = 0; i < rankedCount - 1; i++) {
-    for (int j = 0; j < rankedCount - 1 - i; j++) {
-      int left = rankedPlayers[j];
-      int right = rankedPlayers[j + 1];
+  for (uint8_t i = 0; i < rankedCount - 1; i++) {
+    for (uint8_t j = 0; j < rankedCount - 1 - i; j++) {
+      uint8_t left = rankedPlayers[j];
+      uint8_t right = rankedPlayers[j + 1];
 
       if (!ranksHigher(left, right)) {
-        int temp = rankedPlayers[j];
+        uint8_t temp = rankedPlayers[j];
         rankedPlayers[j] = rankedPlayers[j + 1];
         rankedPlayers[j + 1] = temp;
       } 
@@ -382,6 +377,7 @@ void buildRankings() {
 */
 
 void startFFATimer() {
+  clearPendingDeviceMessages();
   ffaTimerRunning = true;
   duelsGameRunning = false;
   ffaStartMillis = millis();
@@ -407,6 +403,7 @@ void resetFFATimer() {
 
 
 void startDuelsGame() {
+  clearPendingDeviceMessages();
   duelsGameRunning = true;
   ffaTimerRunning = false;
   clearRoundOverState();
@@ -428,7 +425,7 @@ void setGameMode(String newMode) {
   duelsGameRunning = false;
   clearRoundOverState();
 
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active) {
       resetPlayerForCurrentMode(i);
     }
@@ -445,7 +442,7 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
     return;
   }
 
-  int existingVest = findPlayerByVestDeviceId(vestDeviceId);
+  int8_t existingVest = findPlayerByVestDeviceId(vestDeviceId);
   if (existingVest >= 0) {
     //existingVest reconnected, so only replace connection, not add new player
     if (deviceClients[existingVest]) {
@@ -460,7 +457,7 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
     return;
   }
 
-  int slot = findOpenSlot();
+  int8_t slot = findOpenSlot();
   if (slot < 0) {
     client.println("STATE PLAYERID= MODE=" + gameMode + " ALIVE=0 CANSHOOT=0 HP=0 SCORE=0 TIMER=0");
     client.stop();
@@ -481,16 +478,17 @@ void registerVest(String vestDeviceId, String name, WiFiClient client) {
   sendStateToPlayer(slot);
 }
 
-void processHitReport(int targetIndex, String attackerId) {
-  int attackerIndex = findPlayerByAssignedPlayerId(attackerId);
+void processHitReport(int8_t targetIndex, String attackerId) {
+  int8_t attackerIndex = findPlayerByAssignedPlayerId(attackerId);
 
-  //if not a player
+  // if not a player
   if (targetIndex < 0 || targetIndex >= MAX_PLAYERS) return;
-  // 
   if (attackerIndex < 0 || attackerIndex >= MAX_PLAYERS) return;
+  //if not alive
   if (!players[targetIndex].active || !players[attackerIndex].active) return;
   if (attackerIndex == targetIndex) return;
   if (!players[targetIndex].alive || !players[attackerIndex].alive) return;
+  //if not allowed to shoot
   if (!isGameRunning()) return;
   if (!players[attackerIndex].canShoot) return;
 
@@ -534,6 +532,7 @@ String readHelloLine(WiFiClient& client) {
   unsigned long start = millis();
   String hello = "";
 
+  //this waits to receive HELLO from client and continues otherwise
   while (client.connected() && millis() - start < 1000) {
     while (client.available()) {
       char c = client.read();
@@ -552,7 +551,7 @@ String readHelloLine(WiFiClient& client) {
 
 
 void cleanupDisconnectedClients() {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     if (players[i].active && deviceClients[i] && !deviceClients[i].connected()) {
       String removedName = players[i].name;
       removePlayer(i);
@@ -578,6 +577,7 @@ void handleNewDeviceConnection() {
     return;
   }
 
+  // HELLO <vestDeviceID> <playerName>
   String vestDeviceId = hello.substring(6, firstSpace);
   String name = hello.substring(firstSpace + 1);
   name.trim();
@@ -586,7 +586,7 @@ void handleNewDeviceConnection() {
 
 
 void handleExistingDeviceMessages() {
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
     if (deviceClients[i] && deviceClients[i].connected() && deviceClients[i].available()) {
       String line = deviceClients[i].readStringUntil('\n');
       line.trim();
@@ -654,6 +654,7 @@ void handleBrowserAction(String req) {
 
 
 void redirectToHome(WiFiClient& client) {
+  //browser refresh bug fix
   client.println("HTTP/1.1 303 See Other");
   client.println("Location: /");
   client.println("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -773,8 +774,8 @@ void serveWebPage(WiFiClient& client) {
     client.println("<div class=\"player-stat\">Connect a vest to appear on the scoreboard.</div>");
     client.println("</div>");
   } else {
-    for (int k = 0; k < rankedCount; k++) {
-      int i = rankedPlayers[k];
+    for (uint8_t k = 0; k < rankedCount; k++) {
+      uint8_t i = rankedPlayers[k];
 
       client.println("<div class=\"player\">");
       client.println("<div class=\"player-name\"><span class=\"rank\">#" + String(k + 1) + "</span>" + players[i].name + "</div>");
@@ -861,4 +862,14 @@ void handleWebClients() {
 
   header = "";
   client.stop();
+}
+
+void clearPendingDeviceMessages() {
+  for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
+    if (deviceClients[i] && deviceClients[i].connected()) {
+      while (deviceClients[i].available()) {
+        deviceClients[i].read();
+      }
+    }
+  }
 }
